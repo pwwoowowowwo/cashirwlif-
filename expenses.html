@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة مصاريف شاهي وليف</title>
+    <style>
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--maroon); text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        
+        .btn-save { width: 100%; padding: 12px; background: var(--maroon); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; margin-top: 10px; }
+        .btn-save:hover { background: #4a0000; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th { background: #eee; padding: 12px; text-align: right; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        .btn-back { display: inline-block; padding: 10px 20px; background: var(--gold); color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px; }
+        .delete-btn { color: #d32f2f; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-back">⬅ رجوع للرئيسية</a>
+    <h2>تسجيل المصروفات</h2>
+
+    <div class="form-group">
+        <label>نوع المصروف</label>
+        <select id="expCategory">
+            <option value="كهرباء">كهرباء ⚡</option>
+            <option value="ايجار">إيجار 🏠</option>
+            <option value="رواتب">رواتب 💰</option>
+            <option value="حوافز">حوافز 🌟</option>
+            <option value="أخرى">أخرى</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>المبلغ (ريال)</label>
+        <input type="number" id="expAmount" placeholder="0.00" step="0.01">
+    </div>
+
+    <div class="form-group">
+        <label>ملاحظات</label>
+        <input type="text" id="expNote" placeholder="مثلاً: شهر مايو">
+    </div>
+
+    <button class="btn-save" onclick="addExpense()">حفظ المصروف</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>التصنيف</th>
+                <th>المبلغ</th>
+                <th>التاريخ</th>
+                <th>حذف</th>
+            </tr>
+        </thead>
+        <tbody id="expTableBody"></tbody>
+    </table>
+</div>
+
+<script>
+    function addExpense() {
+        const category = document.getElementById('expCategory').value;
+        const amount = parseFloat(document.getElementById('expAmount').value);
+        const note = document.getElementById('expNote').value;
+        const date = new Date().toLocaleDateString();
+
+        if (!amount || amount <= 0) {
+            alert("يرجى إدخال مبلغ صحيح");
+            return;
+        }
+
+        const expense = { category, amount, note, date, id: Date.now() };
+        let expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
+        expenses.push(expense);
+        localStorage.setItem('shahi_expenses', JSON.stringify(expenses));
+
+        // تصفير الحقول وتحديث الجدول
+        document.getElementById('expAmount').value = '';
+        document.getElementById('expNote').value = '';
+        loadExpenses();
+    }
+
+    function loadExpenses() {
+        const expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
+        const tableBody = document.getElementById('expTableBody');
+        tableBody.innerHTML = '';
+
+        expenses.reverse().forEach(exp => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${exp.category} <br> <small style="color:#888">${exp.note}</small></td>
+                    <td>${exp.amount.toFixed(2)} ﷼</td>
+                    <td>${exp.date}</td>
+                    <td class="delete-btn" onclick="deleteExpense(${exp.id})">✖</td>
+                </tr>
+            `;
+        });
+    }
+
+    function deleteExpense(id) {
+        if(confirm('هل تريد حذف هذا المصرف؟')) {
+            let expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
+            expenses = expenses.filter(e => e.id !== id);
+            localStorage.setItem('shahi_expenses', JSON.stringify(expenses));
+            loadExpenses();
+        }
+    }
+
+    window.onload = loadExpenses;
+</script>
+
+</body>
+</html>
