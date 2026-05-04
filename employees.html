@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحضير وانصراف - شاهي وليف</title>
+    <style>
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--maroon); text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+        
+        .section-title { color: var(--maroon); margin-top: 30px; border-right: 4px solid var(--gold); padding-right: 10px; font-size: 18px; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff; }
+        th { background: #f8f8f8; padding: 12px; text-align: right; color: var(--maroon); border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .btn-in { background: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
+        .btn-out { background: #c62828; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .btn-back { display: inline-block; padding: 10px 20px; background: var(--gold); color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px; }
+        
+        .log-container { max-height: 300px; overflow-y: auto; background: #fdfdfd; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #eee; }
+        .log-entry { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; padding: 10px; border-bottom: 1px solid #f0f0f0; align-items: center; }
+        .status-in { color: #2e7d32; font-weight: bold; }
+        .status-out { color: #c62828; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-back">⬅ رجوع للرئيسية</a>
+    <h2>نظام الحضور والانصراف الذكي</h2>
+
+    <div class="section-title">قائمة التحضير المباشر</div>
+    <table>
+        <thead>
+            <tr>
+                <th>اسم الموظف</th>
+                <th>الوظيفة</th>
+                <th>تسجيل الوقت</th>
+            </tr>
+        </thead>
+        <tbody id="empTableBody"></tbody>
+    </table>
+
+    <div class="section-title">سجل العمليات اليومي</div>
+    <div class="log-container">
+        <div class="log-entry" style="background:#eee; font-weight:bold;">
+            <div>الموظف</div>
+            <div>الحالة</div>
+            <div>الوقت</div>
+            <div>التاريخ</div>
+        </div>
+        <div id="attendanceLog"></div>
+    </div>
+</div>
+
+<script>
+    // تسجيل عملية (حضور أو انصراف)
+    function recordTime(name, type) {
+        const now = new Date();
+        const time = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+        const date = now.toLocaleDateString('ar-SA');
+        
+        const log = JSON.parse(localStorage.getItem('shahi_attendance')) || [];
+        log.push({ name, type, date, time, timestamp: now.getTime() });
+        localStorage.setItem('shahi_attendance', JSON.stringify(log));
+        
+        const msg = type === 'دخول' ? 'تم تسجيل حضور' : 'تم تسجيل انصراف';
+        alert(`${msg}: ${name} \nالساعة: ${time}`);
+        loadLogs();
+    }
+
+    // عرض قائمة الموظفين من الذاكرة
+    function loadEmployees() {
+        const employees = JSON.parse(localStorage.getItem('shahi_employees_list')) || [];
+        const tableBody = document.getElementById('empTableBody');
+        tableBody.innerHTML = '';
+
+        if(employees.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">يرجى إضافة موظفين أولاً من قسم الإدارة</td></tr>';
+            return;
+        }
+
+        employees.forEach(emp => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td><strong>${emp.name}</strong></td>
+                    <td>${emp.role}</td>
+                    <td>
+                        <button class="btn-in" onclick="recordTime('${emp.name}', 'دخول')">حضور 👇</button>
+                        <button class="btn-out" onclick="recordTime('${emp.name}', 'خروج')">انصراف 👆</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // تحديث سجل العمليات في الصفحة
+    function loadLogs() {
+        const log = JSON.parse(localStorage.getItem('shahi_attendance')) || [];
+        const logDiv = document.getElementById('attendanceLog');
+        
+        if (log.length === 0) {
+            logDiv.innerHTML = '<div style="text-align:center; padding:20px;">لا توجد سجلات اليوم</div>';
+            return;
+        }
+
+        logDiv.innerHTML = log.reverse().map(entry => `
+            <div class="log-entry">
+                <div><b>${entry.name}</b></div>
+                <div class="${entry.type === 'دخول' ? 'status-in' : 'status-out'}">${entry.type}</div>
+                <div>${entry.time}</div>
+                <div>${entry.date}</div>
+            </div>
+        `).join('');
+    }
+
+    window.onload = function() {
+        loadEmployees();
+        loadLogs();
+    };
+</script>
+
+</body>
+</html>
