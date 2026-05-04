@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- الأكواد المسؤولة عن ظهور صورة البرنامج عند حفظ الرابط -->
+    <!-- أيقونة البرنامج عند الحفظ على الشاشة الرئيسية -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
     <link rel="icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,11 +24,16 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        .header { text-align: center; margin-bottom: 25px; }
+        /* تنبيه حالة الاتصال */
+        #offline-notice {
+            display: none; width: 100%; background: var(--red); color: white;
+            text-align: center; padding: 5px; font-size: 12px; position: fixed; top: 0; z-index: 1000;
+        }
+
+        .header { text-align: center; margin-top: 20px; margin-bottom: 25px; }
         .header h1 { color: var(--maroon); margin: 0; font-size: 30px; font-weight: 900; }
         .header p { color: var(--gold); margin: 5px 0; font-weight: bold; font-size: 14px; }
 
-        /* شريط الإحصائيات الشامل */
         .stats-grid { 
             width: 100%; max-width: 900px; display: grid; 
             grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; 
@@ -39,7 +44,6 @@
             border-bottom: 4px solid var(--gold);
         }
         .stat-card.profit { border-bottom-color: var(--green); background: #fafffa; grid-column: span 3; margin-top: 5px; padding: 15px; }
-        .stat-card small { color: #888; font-size: 11px; display: block; margin-bottom: 4px; font-weight: bold; }
         .stat-card b { color: var(--maroon); font-size: 16px; font-weight: 900; }
         .stat-card.profit b { color: var(--green); font-size: 22px; }
 
@@ -50,15 +54,9 @@
             background: white; border-radius: 22px; padding: 20px 10px; 
             text-decoration: none; border: 1px solid #f0f0f0; 
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            transition: 0.3s;
         }
-        .section-card:active { transform: scale(0.95); }
-        
-        .icon-circle { 
-            width: 55px; height: 55px; border-radius: 18px; 
-            display: flex; align-items: center; justify-content: center; 
-            margin-bottom: 12px; font-size: 28px; 
-        }
+        .icon-circle { width: 55px; height: 55px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 28px; }
 
         .cashier .icon-circle { background: #fff4e5; color: #f39c12; }
         .sales .icon-circle { background: #e8faf0; color: var(--green); }
@@ -67,13 +65,13 @@
         .inventory .icon-circle { background: #ebf5fb; color: var(--blue); }
         .staff .icon-circle { background: #f5eef8; color: var(--purple); }
 
-        .section-card h3 { color: #2c3e50; margin: 0; font-size: 15px; font-weight: 800; }
-
         .footer-tag { margin-top: auto; padding: 40px 0 20px; text-align: center; color: #bdc3c7; font-size: 14px; }
         .footer-tag b { color: var(--maroon); font-size: 16px; }
     </style>
 </head>
 <body>
+
+<div id="offline-notice">أنت تعمل الآن بدون إنترنت - سيتم حفظ البيانات محلياً</div>
 
 <div class="header">
     <div style="font-size:45px">🍃</div>
@@ -81,7 +79,6 @@
     <p>نظام الإدارة المتكامل</p>
 </div>
 
-<!-- إحصائيات البيع والمشتريات والمكسب -->
 <div class="stats-grid">
     <div class="stat-card">
         <small>المبيعات 💰</small>
@@ -96,8 +93,8 @@
         <b id="todayExpenses" style="color:var(--red)">0.00</b>
     </div>
     <div class="stat-card profit">
-        <small>صافي الربح (المكسب الصافي) ✨</small>
-        <b id="netProfit">0.00</b> <small style="display:inline; font-size: 14px;">﷼</small>
+        <small>صافي الربح ✨</small>
+        <b id="netProfit">0.00</b> <small style="display:inline">﷼</small>
     </div>
 </div>
 
@@ -136,42 +133,57 @@
 </div>
 
 <script>
+    // تهيئة فايبربيز مع خاصية العمل أوفلاين
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    function syncCloudData() {
+    // تفعيل حفظ البيانات محلياً (Persistence)
+    // ملاحظة: قاعدة بيانات Realtime Database تحفظ البيانات تلقائياً عند انقطاع الشبكة وترفعها فور عودتها
+    
+    function syncData() {
         const today = new Date().toLocaleDateString('ar-SA');
-        let data = { s: 0, p: 0, e: 0 };
-
-        db.ref('sales').on('value', snap => {
-            data.s = 0; snap.forEach(c => { if(c.val().date === today) data.s += parseFloat(c.val().amount || 0); });
-            document.getElementById('todaySales').innerText = data.s.toFixed(2);
-            updateNet();
+        
+        // متابعة حالة الاتصال
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                document.getElementById('offline-notice').style.display = 'none';
+            } else {
+                document.getElementById('offline-notice').style.display = 'block';
+            }
         });
 
-        db.ref('purchases').on('value', snap => {
-            data.p = 0; snap.forEach(c => { if(c.val().date === today) data.p += parseFloat(c.val().amount || 0); });
-            document.getElementById('todayPurchases').innerText = data.p.toFixed(2);
-            updateNet();
-        });
-
-        db.ref('expenses').on('value', snap => {
-            data.e = 0; snap.forEach(c => { if(c.val().date === today) data.e += parseFloat(c.val().amount || 0); });
-            document.getElementById('todayExpenses').innerText = data.e.toFixed(2);
-            updateNet();
+        // جلب البيانات مع دعم التخزين المؤقت
+        ['sales', 'purchases', 'expenses'].forEach(path => {
+            db.ref(path).on('value', snap => {
+                let total = 0;
+                snap.forEach(c => {
+                    if(c.val().date === today) total += parseFloat(c.val().amount || 0);
+                });
+                if(path === 'sales') document.getElementById('todaySales').innerText = total.toFixed(2);
+                if(path === 'purchases') document.getElementById('todayPurchases').innerText = total.toFixed(2);
+                if(path === 'expenses') document.getElementById('todayExpenses').innerText = total.toFixed(2);
+                calculateNet();
+            });
         });
     }
 
-    function updateNet() {
+    function calculateNet() {
         const s = parseFloat(document.getElementById('todaySales').innerText) || 0;
         const p = parseFloat(document.getElementById('todayPurchases').innerText) || 0;
         const e = parseFloat(document.getElementById('todayExpenses').innerText) || 0;
         document.getElementById('netProfit').innerText = (s - (p + e)).toFixed(2);
     }
 
-    window.onload = syncCloudData;
-</script>
+    window.onload = syncData;
 
+    // كود تشغيل البرنامج كتطبيق (Offline Service Worker)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed'));
+        });
+    }
+</script>
 </body>
 </html>
