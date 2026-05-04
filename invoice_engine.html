@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام طباعة الفواتير - شاهي وليف</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --primary: #630000; --accent: #c5a059; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f0f0; margin: 0; display: flex; }
+        
+        /* لوحة التحكم في الترويسة */
+        .controls { width: 350px; background: white; height: 100vh; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; z-index: 10; }
+        .controls h3 { color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        .field { margin-bottom: 15px; }
+        .field label { display: block; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
+        .field input, .field textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        
+        /* منطقة الفاتورة */
+        .print-area { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 40px; }
+        
+        /* تصميم الفاتورة الحرارية */
+        #thermalReceipt { 
+            width: 80mm; background: white; padding: 8mm; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.1); color: black; font-size: 13px;
+        }
+        .header-section { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+        .biz-name { font-size: 20px; font-weight: bold; margin: 0; }
+        .info-line { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12px; }
+        
+        .items-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .items-table th { border-bottom: 1px solid #000; text-align: right; font-size: 12px; }
+        .items-table td { padding: 5px 0; text-align: right; }
+        
+        .total-section { border-top: 2px solid #000; margin-top: 10px; padding-top: 5px; text-align: center; }
+        .qr-box { display: flex; justify-content: center; margin: 15px 0; }
+        
+        /* أمر الطباعة */
+        @media print {
+            .controls { display: none; }
+            body { background: white; }
+            .print-area { padding: 0; }
+            #thermalReceipt { box-shadow: none; border: none; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <h3>⚙️ التحكم بالترويسة</h3>
+    <div class="field">
+        <label>اسم المنشأة</label>
+        <input type="text" id="h_name" value="شاهي وليف" oninput="liveUpdate()">
+    </div>
+    <div class="field">
+        <label>الرقم الضريبي</label>
+        <input type="text" id="h_tax" value="123456789012345" oninput="liveUpdate()">
+    </div>
+    <div class="field">
+        <label>العنوان / الفرع</label>
+        <input type="text" id="h_loc" value="القصيم - حي النور" oninput="liveUpdate()">
+    </div>
+    <div class="field">
+        <label>رقم الجوال</label>
+        <input type="text" id="h_phone" value="050XXXXXXXX" oninput="liveUpdate()">
+    </div>
+    <div class="field">
+        <label>رسالة ترحيبية (أسفل الفاتورة)</label>
+        <textarea id="h_msg" oninput="liveUpdate()">شكراً لزيارتكم.. نرجو رؤيتكم قريباً!</textarea>
+    </div>
+    <hr>
+    <div id="logStatus" style="font-size: 12px; color: #666; text-align: center;">جاري المراقبة... 📡</div>
+</div>
+
+<div class="print-area">
+    <div id="thermalReceipt">
+        <div class="header-section">
+            <p class="biz-name" id="view_name">شاهي وليف</p>
+            <p id="view_loc">القصيم - حي النور</p>
+            <p>الرقم الضريبي: <span id="view_tax">123456789012345</span></p>
+            <p>الجوال: <span id="view_phone">050XXXXXXXX</span></p>
+        </div>
+
+        <div class="info-line"><span>رقم الفاتورة:</span> <b id="view_serial">#----</b></div>
+        <div class="info-line"><span>رقم الطلب:</span> <b id="view_orderNum" style="font-size: 16px;">#0</b></div>
+        <div class="info-line"><span>التاريخ:</span> <span id="view_date">--/--/----</span></div>
+
+        <table class="items-table">
+            <thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th></tr></thead>
+            <tbody id="view_items"></tbody>
+        </table>
+
+        <div class="total-section">
+            <h3 style="margin: 5px 0;">المجموع الشامل: <span id="view_total">0.00</span> ﷼</h3>
+            <small>(شامل ضريبة القيمة المضافة)</small>
+        </div>
+
+        <div class="qr-box" id="qrcode"></div>
+        <p id="view_msg" style="text-align:center; font-size: 11px;"></p>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function liveUpdate() {
+        document.getElementById('view_name').innerText = document.getElementById('h_name').value;
+        document.getElementById('view_tax').innerText = document.getElementById('h_tax').value;
+        document.getElementById('view_loc').innerText = document.getElementById('h_loc').value;
+        document.getElementById('view_phone').innerText = document.getElementById('h_phone').value;
+        document.getElementById('view_msg').innerText = document.getElementById('h_msg').value;
+    }
+
+    // مراقبة قاعدة البيانات لحظياً
+    let lastKey = "";
+    db.ref('sales').limitToLast(1).on('child_added', (snap) => {
+        if (snap.key === lastKey) return;
+        lastKey = snap.key;
+        const sale = snap.val();
+
+        // توليد رقم تسلسلي ورقم طلب (Serial & Order Number)
+        db.ref('order_counter').transaction(c => (c || 0) + 1, (err, comm, s) => {
+            const orderNo = s.val();
+            const serialNo = "SH-" + new Date().getFullYear().toString().substr(-2) + "-" + snap.key.substr(-5).toUpperCase();
+            
+            updateReceipt(sale, orderNo, serialNo);
+        });
+    });
+
+    function updateReceipt(sale, orderNo, serialNo) {
+        document.getElementById('view_serial').innerText = serialNo;
+        document.getElementById('view_orderNum').innerText = orderNo;
+        document.getElementById('view_date').innerText = new Date().toLocaleString('ar-SA');
+        document.getElementById('view_total').innerText = sale.amount.toFixed(2);
+        
+        // عرض العناصر
+        const items = (sale.items || []).map(i => `<tr><td>${i.name}</td><td>1</td><td>${i.price} ﷼</td></tr>`).join('');
+        document.getElementById('view_items').innerHTML = items;
+
+        // توليد الـ QR المعتمد للمرحلة الأولى
+        document.getElementById('qrcode').innerHTML = "";
+        const qrData = `المورد: ${document.getElementById('h_name').value}\nالرقم الضريبي: ${document.getElementById('h_tax').value}\nالمبلغ: ${sale.amount}\nالفاتورة: ${serialNo}`;
+        new QRCode(document.getElementById("qrcode"), { text: qrData, width: 120, height: 120 });
+
+        // تنبيه صوتي عند وصول فاتورة جديدة
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+        audio.play();
+
+        document.getElementById('logStatus').innerText = "✅ تم استقبال فاتورة جديدة!";
+        setTimeout(() => { window.print(); }, 1500); // طباعة تلقائية
+    }
+
+    window.onload = liveUpdate;
+</script>
+</body>
+</html>
