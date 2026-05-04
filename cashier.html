@@ -10,58 +10,46 @@
         :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { height: 45px; background: var(--maroon); color: white; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; }
         
-        /* تقليص ارتفاع الهيدر */
-        header { height: 40px; background: var(--maroon); color: white; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; }
-        .header-btns { display: flex; gap: 5px; }
-        .report-btn { background: var(--gold); border: none; padding: 4px 10px; border-radius: 4px; color: white; cursor: pointer; font-size: 11px; }
-
         .main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
         
-        /* الحفاظ على العرض وتقليص ارتفاع عناصر القائمة */
+        /* تعديل الطول بنسبة 60% مع ثبات العرض */
         .menu-side { flex: 3; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
         .category-bar { display: flex; gap: 5px; position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 5px; }
-        .cat-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; font-size: 12px; }
+        .cat-btn { padding: 6px 15px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; font-size: 13px; }
         .cat-btn.active { background: var(--maroon); color: white; }
         
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-        .item-card { background: white; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee; cursor: pointer; height: 65px; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .item-card span { font-weight: bold; font-size: 12px; margin-bottom: 2px; }
-        .item-card b { color: var(--maroon); font-size: 13px; }
+        .item-card { background: white; border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee; cursor: pointer; height: 70px; justify-content: center; }
+        .item-card span { font-size: 13px; font-weight: bold; }
+        .item-card b { color: var(--maroon); font-size: 14px; }
 
-        .cart-side { flex: 1.5; min-width: 340px; background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        
-        /* إضافة حقل رقم الجوال */
-        .customer-box { margin-bottom: 8px; }
-        .customer-box input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; text-align: center; }
-
+        .cart-side { flex: 1.5; min-width: 340px; background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .cart-items-container { flex: 1; overflow-y: auto; margin: 5px 0; border-top: 1px solid #f5f5f5; }
-        .cart-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f9f9f9; font-size: 13px; }
+        .cart-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
         
-        /* تقليص ارتفاع أزرار الأرقام */
+        .customer-info { display: flex; gap: 5px; margin-bottom: 8px; }
+        .customer-info input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; text-align: center; }
+
         .numpad-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
-        .num-btn { padding: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .num-btn { padding: 8px; background: #f8f9fa; border: 1px solid #eee; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .num-btn.active { background: var(--maroon); color: white; }
         
-        .payment-box { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
-        .pay-btn { padding: 8px; border: 1px solid #eee; border-radius: 8px; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .pay-btn.active { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+        .btn-hold { background: var(--gold); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-pay { background: #2e7d32; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; grid-column: span 2; }
 
-        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .btn-hold { background: var(--gold); color: white; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-pay { background: #2e7d32; color: white; padding: 10px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; grid-column: span 2; margin-top: 5px; }
-        
-        @media print { body * { visibility: hidden; } #receipt, #receipt * { visibility: visible; } }
+        .payment-box { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 8px; }
+        .pay-btn { padding: 8px; border: 1px solid #eee; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+        .pay-btn.active { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
     </style>
 </head>
 <body>
 
 <header>
-    <span>🍃 شاهي وليف</span>
-    <div class="header-btns">
-        <button class="report-btn" onclick="openAddModal()">➕ صنف</button>
-        <button class="report-btn" style="background:#455a64" onclick="location.href='sales.html'">📊 السجل</button>
-    </div>
+    <span>🍃 شاهي وليف | الكاشير</span>
+    <button class="cat-btn" style="background: var(--gold); color:white;" onclick="openAddModal()">+ صنف</button>
 </header>
 
 <div class="main-layout">
@@ -75,13 +63,11 @@
     </div>
 
     <div class="cart-side">
-        <div class="customer-box">
-            <input type="tel" id="custPhone" placeholder="رقم جوال العميل (اختياري)">
+        <div class="customer-info">
+            <input type="tel" id="custPhone" placeholder="رقم جوال العميل">
         </div>
-
-        <div class="cart-items-container" id="cartList">
-            <p style="text-align:center; color:#ccc; font-size: 12px; margin-top:20px;">السلة فارغة</p>
-        </div>
+        
+        <div class="cart-items-container" id="cartList"></div>
 
         <div class="numpad-box">
             <button class="num-btn active" onclick="setQty(1, this)">1</button>
@@ -90,16 +76,16 @@
         </div>
 
         <div class="payment-box">
-            <button class="pay-btn active" id="payCash" onclick="setPay('نقدي', this)">💵 نقدي</button>
-            <button class="pay-btn" id="payCard" onclick="setPay('شبكة', this)">💳 شبكة</button>
+            <button class="pay-btn active" onclick="setPay('نقدي', this)">نقدي</button>
+            <button class="pay-btn" onclick="setPay('شبكة', this)">شبكة</button>
         </div>
 
-        <div style="font-size:20px; font-weight:bold; color:var(--maroon); text-align:center; margin-bottom:8px;">
+        <div style="font-size:22px; font-weight:bold; color:var(--maroon); text-align:center; margin-bottom:8px;">
             <span id="grandTotal">0.00</span> ﷼
         </div>
 
         <div class="action-btns">
-            <button class="btn-hold" onclick="holdOrder()">⏳ تعليق</button>
+            <button class="btn-hold" onclick="holdOrder()">تعليق الفاتورة ⏳</button>
             <button class="btn-pay" onclick="finishSaleCloud()">إنهاء وطباعة ✅</button>
         </div>
     </div>
@@ -140,42 +126,35 @@
 
     function renderCart() {
         const list = document.getElementById('cartList');
-        list.innerHTML = cart.length === 0 ? '<p style="text-align:center; color:#ccc; font-size:12px; margin-top:20px;">السلة فارغة</p>' : 
-            cart.map((item, i) => `<div class="cart-row"><span>${item.name}</span><b>${item.price.toFixed(2)} <span onclick="removeFromCart(${i})" style="color:red; margin-right:5px; cursor:pointer">✕</span></b></div>`).join('');
+        list.innerHTML = cart.map((item, i) => `<div class="cart-row"><span>${item.name}</span><b>${item.price.toFixed(2)}</b></div>`).join('');
         document.getElementById('grandTotal').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
     }
 
-    function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
-    function setQty(n, btn) { currentQty = n; document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-    function setPay(m, btn) { payMethod = m; document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+    function setQty(n, btn) {
+        currentQty = n;
+        document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
 
-    // وظيفة تعليق الفاتورة
+    function setPay(m, btn) {
+        payMethod = m;
+        document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
     function holdOrder() {
-        if(cart.length === 0) return;
+        if(cart.length === 0) return alert("السلة فارغة");
         const phone = document.getElementById('custPhone').value;
-        db.ref('held_orders').push({
-            items: cart,
-            phone: phone,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        }).then(() => {
-            alert("تم تعليق الفاتورة بنجاح ⏳");
-            cart = []; renderCart(); document.getElementById('custPhone').value = '';
-        });
+        db.ref('held_orders').push({ cart, phone, timestamp: Date.now() });
+        alert("تم تعليق الفاتورة");
+        cart = []; renderCart();
     }
 
     function finishSaleCloud() {
-        if(cart.length === 0) return alert("السلة فارغة!");
-        const total = parseFloat(document.getElementById('grandTotal').innerText);
+        if(cart.length === 0) return;
         const phone = document.getElementById('custPhone').value;
-        const saleRecord = {
-            amount: total,
-            method: payMethod,
-            phone: phone,
-            date: new Date().toLocaleDateString('ar-SA'),
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-        db.ref('sales').push(saleRecord).then(() => {
-            alert("تم الحفظ والطباعة ✅");
+        const total = parseFloat(document.getElementById('grandTotal').innerText);
+        db.ref('sales').push({ amount: total, method: payMethod, phone, timestamp: Date.now() }).then(() => {
             cart = []; renderCart(); document.getElementById('custPhone').value = ''; window.print();
         });
     }
@@ -184,4 +163,3 @@
 </script>
 </body>
 </html>
-
