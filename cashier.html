@@ -17,63 +17,57 @@
 
         .main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
         
-        /* منطقة الأصناف: ممتدة ومرنة */
         .menu-side { flex: 3; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; height: 100%; }
         .category-bar { display: flex; gap: 6px; position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 8px; }
         .cat-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; transition: 0.2s; }
         .cat-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
         
-        /* شبكة الأصناف تتوسع تلقائياً */
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding-bottom: 20px; }
         .item-card { background: white; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee; cursor: pointer; min-height: 70px; justify-content: center; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .item-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .item-card span { font-weight: bold; font-size: 13px; text-align: center; color: #333; }
         .item-card b { color: var(--maroon); font-size: 14px; margin-top: 4px; }
 
-        /* السلة: تقليص الطول بنسبة 50% */
         .cart-side { flex: 1.5; min-width: 320px; background: white; border-radius: 15px; display: flex; flex-direction: column; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-height: 85vh; align-self: flex-start; }
-        
         .customer-box input { width: 100%; padding: 10px; border: 2px solid #f0f0f0; border-radius: 8px; font-size: 13px; text-align: center; margin-bottom: 8px; outline: none; }
-        .customer-box input:focus { border-color: var(--gold); }
 
-        /* منطقة المنتجات في السلة - طول مختصر */
         .cart-items-container { height: 150px; overflow-y: auto; margin: 5px 0; border: 1px solid #f9f9f9; border-radius: 8px; padding: 5px; }
         .cart-row { display: flex; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid #f1f1f1; font-size: 13px; align-items: center; }
         
-        /* تمييز ألوان الأرقام */
         .numpad-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
         .num-btn { padding: 10px; background: #fdfdfd; border: 1px solid #eee; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; color: var(--maroon); box-shadow: 0 2px 0 #ddd; }
-        .num-btn:active { transform: translateY(2px); box-shadow: none; }
         .num-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
         
-        /* تمييز ألوان أزرار الدفع */
         .payment-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .pay-btn { padding: 10px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .pay-btn.active { background: #e8f5e9; border-color: var(--green); color: var(--green); }
 
-        /* أزرار الإجراءات بألوان مميزة */
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-hold { background: var(--gold); color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; box-shadow: 0 3px 0 #a3854a; }
         .btn-pay { background: var(--green); color: white; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; grid-column: span 2; margin-top: 8px; box-shadow: 0 4px 0 #1e5622; }
-        .btn-hold:active, .btn-pay:active { transform: translateY(3px); box-shadow: none; }
 
         .total-display { font-size: 24px; font-weight: 1000; color: var(--maroon); text-align: center; margin: 10px 0; padding: 8px; background: #fffcf0; border-radius: 10px; border: 1px dashed var(--gold); }
         
-        @media print { body * { visibility: hidden; } #receipt, #receipt * { visibility: visible; } }
+        /* نافذة الطلبات المعلقة */
+        #holdModal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 80%; border-radius: 15px; max-height: 70vh; overflow-y: auto; }
+        .hold-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
+
+        #offlineNotice { display: none; background: #e74c3c; color: white; text-align: center; font-size: 12px; padding: 2px; }
     </style>
 </head>
 <body>
 
+<div id="offlineNotice">⚠️ لا يوجد اتصال - العمليات تُحفظ محلياً</div>
+
 <header>
     <span>🍃 شاهي وليف | كاشير سحابي</span>
     <div class="header-btns">
-        <button class="add-btn" onclick="openAddModal()">➕ صنف جديد</button>
-        <button class="add-btn" style="background:var(--maroon); border:1px solid var(--gold)" onclick="location.href='sales.html'">📊 التقارير</button>
+        <button class="add-btn" style="background:var(--gold)" onclick="showHeldOrders()">⏳ الفواتير المعلقة</button>
+        <button class="add-btn" onclick="location.href='inventory.html'">➕ صنف جديد</button>
     </div>
 </header>
 
 <div class="main-layout">
-    <!-- منطقة الأصناف الممتدة -->
     <div class="menu-side">
         <div class="category-bar" id="catBar">
             <button class="cat-btn active" onclick="filterCat('tea', this)">شاي</button>
@@ -81,48 +75,47 @@
             <button class="cat-btn" onclick="filterCat('bakery', this)">مخبوزات</button>
             <button class="cat-btn" onclick="filterCat('sides', this)">إضافات</button>
         </div>
-        <div id="itemsGrid" class="items-grid">
-            <!-- الأصناف تظهر هنا وتتمدد تلقائياً -->
-        </div>
+        <div id="itemsGrid" class="items-grid"></div>
     </div>
 
-    <!-- السلة المختصرة -->
     <div class="cart-side">
-        <div class="customer-box">
-            <input type="tel" id="custPhone" placeholder="رقم جوال العميل 📱">
-        </div>
-
-        <div class="cart-items-container" id="cartList">
-            <p style="text-align:center; color:#ccc; font-size: 12px; margin-top:50px;">بانتظار طلبك..</p>
-        </div>
-
+        <div class="customer-box"><input type="tel" id="custPhone" placeholder="رقم جوال العميل 📱"></div>
+        <div class="cart-items-container" id="cartList"></div>
         <div class="numpad-box">
             <button class="num-btn active" onclick="setQty(1, this)">1</button>
             <button class="num-btn" onclick="setQty(2, this)">2</button>
             <button class="num-btn" onclick="setQty(3, this)">3</button>
         </div>
-
         <div class="payment-box">
             <button class="pay-btn active" id="payCash" onclick="setPay('نقدي', this)">💵 نقدي</button>
             <button class="pay-btn" id="payCard" onclick="setPay('شبكة', this)">💳 شبكة</button>
         </div>
-
-        <div class="total-display">
-            <span id="grandTotal">0.00</span> <small style="font-size:14px">﷼</small>
-        </div>
-
+        <div class="total-display"><span id="grandTotal">0.00</span> <small style="font-size:14px">﷼</small></div>
         <div class="action-btns">
             <button class="btn-hold" onclick="holdOrder()">⏳ تعليق</button>
             <button class="btn-hold" style="background:#888; box-shadow: 0 3px 0 #666;" onclick="cart=[];renderCart()">🗑️ مسح</button>
-            <button class="btn-pay" onclick="finishSaleCloud()">إنهاء الطلب وطباعة ✅</button>
+            <button class="btn-pay" onclick="finishSaleCloud()">إنهاء الطلب ✅</button>
         </div>
+    </div>
+</div>
+
+<!-- مودال الفواتير المعلقة -->
+<div id="holdModal">
+    <div class="modal-content">
+        <h3 style="text-align:center; color:var(--maroon)">الفواتير المعلقة ⏳</h3>
+        <div id="heldOrdersList"></div>
+        <button onclick="document.getElementById('holdModal').style.display='none'" style="width:100%; padding:10px; margin-top:10px; background:#eee; border:none; border-radius:8px;">إغلاق</button>
     </div>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
-    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => {
+        document.getElementById('offlineNotice').style.display = snap.val() ? 'none' : 'block';
+    });
 
     let cart = [], currentQty = 1, payMethod = "نقدي", currentCat = 'tea';
 
@@ -154,7 +147,7 @@
 
     function renderCart() {
         const list = document.getElementById('cartList');
-        list.innerHTML = cart.length === 0 ? '<p style="text-align:center; color:#ccc; font-size:12px; margin-top:50px;">بانتظار طلبك..</p>' : 
+        list.innerHTML = cart.length === 0 ? '<p style="text-align:center; color:#ccc; font-size: 12px; margin-top:50px;">بانتظار طلبك..</p>' : 
             cart.map((item, i) => `<div class="cart-row"><span>${item.name}</span><b>${item.price.toFixed(2)} <span onclick="cart.splice(${i},1);renderCart()" style="color:red; cursor:pointer; margin-right:5px;">✕</span></b></div>`).join('');
         document.getElementById('grandTotal').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
     }
@@ -162,22 +155,52 @@
     function setQty(n, btn) { currentQty = n; document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
     function setPay(m, btn) { payMethod = m; document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
 
+    // تعليق الفاتورة
     function holdOrder() {
         if(cart.length === 0) return;
-        const phone = document.getElementById('custPhone').value;
-        db.ref('held_orders').push({ items: cart, phone, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-            alert("تم تعليق الطلب ⏳");
+        const phone = document.getElementById('custPhone').value || "بدون رقم";
+        const total = document.getElementById('grandTotal').innerText;
+        db.ref('held_orders').push({ items: cart, phone, total, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+            alert("تم تعليق الفاتورة ⏳");
             cart = []; renderCart(); document.getElementById('custPhone').value = '';
+        });
+    }
+
+    // عرض الفواتير المعلقة
+    function showHeldOrders() {
+        db.ref('held_orders').once('value', (snap) => {
+            const list = document.getElementById('heldOrdersList');
+            list.innerHTML = '';
+            snap.forEach(child => {
+                const order = child.val();
+                list.innerHTML += `
+                    <div class="hold-item">
+                        <div><b>جوال: ${order.phone}</b> <br> <small>المبلغ: ${order.total} ﷼</small></div>
+                        <button onclick="restoreOrder('${child.key}')" style="background:var(--green); color:white; border:none; padding:8px 15px; border-radius:5px;">استرجاع ✅</button>
+                    </div>`;
+            });
+            document.getElementById('holdModal').style.display = 'block';
+        });
+    }
+
+    // استرجاع الفاتورة للسلة
+    function restoreOrder(key) {
+        db.ref('held_orders/' + key).once('value', (snap) => {
+            const order = snap.val();
+            cart = order.items;
+            document.getElementById('custPhone').value = order.phone === "بدون رقم" ? "" : order.phone;
+            renderCart();
+            db.ref('held_orders/' + key).remove(); // حذفها من المعلقة بعد الاسترجاع
+            document.getElementById('holdModal').style.display = 'none';
         });
     }
 
     function finishSaleCloud() {
         if(cart.length === 0) return;
         const total = parseFloat(document.getElementById('grandTotal').innerText);
-        const phone = document.getElementById('custPhone').value;
-        db.ref('sales').push({ amount: total, method: payMethod, phone, date: new Date().toLocaleDateString('ar-SA'), timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-            alert("تم الحفظ بنجاح ✅");
-            cart = []; renderCart(); document.getElementById('custPhone').value = ''; window.print();
+        db.ref('sales').push({ amount: total, method: payMethod, date: new Date().toLocaleDateString('ar-SA'), timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+            alert("تم إنهاء البيع ✅");
+            cart = []; renderCart(); document.getElementById('custPhone').value = '';
         });
     }
 
