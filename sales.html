@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل مبيعات شاهي وليف السحابي</title>
+    <!-- مكتبات فايبربيز للربط السحابي -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: var(--maroon); text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-top: 0; }
+        
+        .stats-header { display: flex; justify-content: space-between; margin-bottom: 20px; background: #fff5f5; padding: 20px; border-radius: 12px; border: 1px solid #eee; }
+        .stats-header div { text-align: center; flex: 1; border-left: 1px solid #eee; }
+        .stats-header div:last-child { border-left: none; }
+        .stats-header span { display: block; font-size: 26px; font-weight: bold; color: var(--maroon); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: var(--maroon); color: white; padding: 12px; text-align: right; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+
+        .btn-back { display: inline-block; padding: 10px 20px; background: var(--gold); color: white; text-decoration: none; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .btn-clear { background: #d32f2f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; float: left; font-weight: bold; }
+        
+        /* تنسيق الطباعة النظيفة */
+        @media print {
+            .btn-back, .btn-clear { display: none; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-back">⬅ رجوع للرئيسية</a>
+    <button class="btn-clear" onclick="clearSalesCloud()">تصفير السجل السحابي</button>
+    
+    <h2>سجل المبيعات اليومي - شاهي وليف</h2>
+
+    <div class="stats-header">
+        <div>إجمالي المبيعات <span id="totalDisplay">0.00</span> <small>﷼</small></div>
+        <div>عدد الفواتير <span id="countDisplay">0</span></div>
+        <div>ضريبة القيمة المضافة (15%) <span id="taxDisplay">0.00</span> <small>﷼</small></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الوقت</th>
+                <th>التاريخ</th>
+                <th>طريقة الدفع</th>
+                <th>المبلغ (شامل الضريبة)</th>
+            </tr>
+        </thead>
+        <tbody id="salesTableBody">
+            <tr><td colspan="4" style="text-align:center;">جاري جلب البيانات من السحاب...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // إعدادات Firebase الخاصة بمشروعك
+    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const db = firebase.database();
+
+    // جلب البيانات ومراقبتها فورياً
+    function loadSalesCloud() {
+        db.ref('sales').on('value', (snapshot) => {
+            const tableBody = document.getElementById('salesTableBody');
+            const data = snapshot.val();
+            let total = 0;
+            tableBody.innerHTML = ''; 
+
+            if (!data) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا توجد عمليات بيع مسجلة</td></tr>';
+                updateStats(0, 0);
+                return;
+            }
+
+            // تحويل البيانات لمصفوفة وترتيبها من الأحدث للأقدم
+            const salesArray = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+            salesArray.sort((a, b) => b.timestamp - a.timestamp);
+
+            salesArray.forEach(sale => {
+                total += sale.amount;
+                const row = `<tr>
+                    <td>${sale.time || '-'}</td>
+                    <td>${sale.date || '-'}</td>
+                    <td>${sale.method || 'نقدي'}</td>
+                    <td style="font-weight:bold; color:var(--maroon)">${sale.amount.toFixed(2)} ﷼</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+            updateStats(total, salesArray.length);
+        });
+    }
+
+    function updateStats(total, count) {
+        const tax = total * 0.15; // حساب الضريبة بناءً على الإجمالي
+        document.getElementById('totalDisplay').innerText = total.toFixed(2);
+        document.getElementById('countDisplay').innerText = count;
+        document.getElementById('taxDisplay').innerText = tax.toFixed(2);
+    }
+
+    // تصفير السجل من السحاب
+    function clearSalesCloud() {
+        if(confirm('هل أنت متأكد من مسح جميع بيانات المبيعات من السحاب نهائياً؟')) {
+            db.ref('sales').remove().then(() => {
+                alert("تم تصفير السجل بنجاح ✅");
+            });
+        }
+    }
+
+    window.onload = loadSalesCloud;
+</script>
+
+</body>
+</html>
