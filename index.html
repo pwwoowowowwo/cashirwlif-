@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- أيقونة التطبيق عند الحفظ على الشاشة الرئيسية -->
+    
+    <!-- الأكواد المسؤولة عن ظهور صورة البرنامج عند حفظ الرابط -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
+    <link rel="icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="شاهي وليف">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <title>لوحة تحكم شاهي وليف</title>
-    <!-- مكتبة فايبربيز للمزامنة اللحظية -->
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
         :root { 
             --maroon: #630000; --gold: #c5a059; --bg: #f8f9fa; 
@@ -25,39 +31,33 @@
         /* شريط الإحصائيات الشامل */
         .stats-grid { 
             width: 100%; max-width: 900px; display: grid; 
-            grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 25px; 
+            grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; 
         }
         .stat-card { 
-            background: white; padding: 15px; border-radius: 20px; 
-            text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            background: white; padding: 12px; border-radius: 18px; 
+            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
             border-bottom: 4px solid var(--gold);
         }
-        .stat-card.profit { border-bottom-color: var(--green); background: #fafffa; grid-column: span 3; margin-top: 5px; }
+        .stat-card.profit { border-bottom-color: var(--green); background: #fafffa; grid-column: span 3; margin-top: 5px; padding: 15px; }
         .stat-card small { color: #888; font-size: 11px; display: block; margin-bottom: 4px; font-weight: bold; }
-        .stat-card b { color: var(--maroon); font-size: 18px; font-weight: 900; }
-        .stat-card.profit b { color: var(--green); font-size: 24px; }
+        .stat-card b { color: var(--maroon); font-size: 16px; font-weight: 900; }
+        .stat-card.profit b { color: var(--green); font-size: 22px; }
 
         .main-container { width: 100%; max-width: 900px; }
-        
-        /* شبكة الأقسام المفرقة والممتدة */
-        .sections-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 15px; width: 100%; 
-        }
+        .sections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; width: 100%; }
         
         .section-card { 
             background: white; border-radius: 22px; padding: 20px 10px; 
             text-decoration: none; border: 1px solid #f0f0f0; 
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            transition: 0.3s;
+            transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.02);
         }
         .section-card:active { transform: scale(0.95); }
         
-        /* تلوين الأيقونات بشكل مفرق */
         .icon-circle { 
-            width: 60px; height: 60px; border-radius: 18px; 
+            width: 55px; height: 55px; border-radius: 18px; 
             display: flex; align-items: center; justify-content: center; 
-            margin-bottom: 12px; font-size: 30px; 
+            margin-bottom: 12px; font-size: 28px; 
         }
 
         .cashier .icon-circle { background: #fff4e5; color: #f39c12; }
@@ -67,15 +67,10 @@
         .inventory .icon-circle { background: #ebf5fb; color: var(--blue); }
         .staff .icon-circle { background: #f5eef8; color: var(--purple); }
 
-        .section-card h3 { color: #2c3e50; margin: 0; font-size: 16px; font-weight: 800; }
-        .section-card p { color: #95a5a6; font-size: 11px; margin: 5px 0 0; line-height: 1.3; }
+        .section-card h3 { color: #2c3e50; margin: 0; font-size: 15px; font-weight: 800; }
 
-        /* التذييل (تطوير فهد المخلفي) */
-        .footer-tag { 
-            margin-top: auto; padding: 40px 0 20px; 
-            text-align: center; color: #bdc3c7; font-size: 14px; 
-        }
-        .footer-tag b { color: var(--maroon); font-size: 16px; letter-spacing: 0.5px; }
+        .footer-tag { margin-top: auto; padding: 40px 0 20px; text-align: center; color: #bdc3c7; font-size: 14px; }
+        .footer-tag b { color: var(--maroon); font-size: 16px; }
     </style>
 </head>
 <body>
@@ -101,8 +96,8 @@
         <b id="todayExpenses" style="color:var(--red)">0.00</b>
     </div>
     <div class="stat-card profit">
-        <small>صافي الربح (المكسب) ✨</small>
-        <b id="netProfit">0.00</b> <small style="display:inline">﷼</small>
+        <small>صافي الربح (المكسب الصافي) ✨</small>
+        <b id="netProfit">0.00</b> <small style="display:inline; font-size: 14px;">﷼</small>
     </div>
 </div>
 
@@ -111,38 +106,26 @@
         <a href="cashier.html" class="section-card cashier">
             <div class="icon-circle">🏪</div>
             <h3>الكاشير</h3>
-            <p>البيع والطباعة</p>
         </a>
-
         <a href="sales.html" class="section-card sales">
             <div class="icon-circle">📈</div>
             <h3>المبيعات</h3>
-            <p>تقارير الأداء</p>
         </a>
-
         <a href="purchases.html" class="section-card purchases">
             <div class="icon-circle">🛒</div>
             <h3>المشتريات</h3>
-            <p>إدارة الموردين</p>
         </a>
-
         <a href="expenses.html" class="section-card expenses">
             <div class="icon-circle">💸</div>
             <h3>المصاريف</h3>
-            <p>النثريات والخدمات</p>
         </a>
-
         <a href="inventory.html" class="section-card inventory">
             <div class="icon-circle">📦</div>
             <h3>الأصناف</h3>
-            <p>قائمة المنتجات</p>
         </a>
-        
-        <!-- قسم إدارة الموظفين المضاف -->
         <a href="employees.html" class="section-card staff">
             <div class="icon-circle">👥</div>
             <h3>الموظفين</h3>
-            <p>الرواتب والحضور</p>
         </a>
     </div>
 </div>
@@ -153,45 +136,37 @@
 </div>
 
 <script>
-    // ربط Firebase للتأكد من المزامنة
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
     function syncCloudData() {
         const today = new Date().toLocaleDateString('ar-SA');
-        let totals = { s: 0, p: 0, e: 0 };
+        let data = { s: 0, p: 0, e: 0 };
 
-        // جلب المبيعات
-        db.ref('sales').on('value', (snap) => {
-            totals.s = 0;
-            snap.forEach(c => { if(c.val().date === today) totals.s += parseFloat(c.val().amount || 0); });
-            document.getElementById('todaySales').innerText = totals.s.toFixed(2);
-            updateFinalNet();
+        db.ref('sales').on('value', snap => {
+            data.s = 0; snap.forEach(c => { if(c.val().date === today) data.s += parseFloat(c.val().amount || 0); });
+            document.getElementById('todaySales').innerText = data.s.toFixed(2);
+            updateNet();
         });
 
-        // جلب المشتريات
-        db.ref('purchases').on('value', (snap) => {
-            totals.p = 0;
-            snap.forEach(c => { if(c.val().date === today) totals.p += parseFloat(c.val().amount || 0); });
-            document.getElementById('todayPurchases').innerText = totals.p.toFixed(2);
-            updateFinalNet();
+        db.ref('purchases').on('value', snap => {
+            data.p = 0; snap.forEach(c => { if(c.val().date === today) data.p += parseFloat(c.val().amount || 0); });
+            document.getElementById('todayPurchases').innerText = data.p.toFixed(2);
+            updateNet();
         });
 
-        // جلب المصاريف
-        db.ref('expenses').on('value', (snap) => {
-            totals.e = 0;
-            snap.forEach(c => { if(c.val().date === today) totals.e += parseFloat(c.val().amount || 0); });
-            document.getElementById('todayExpenses').innerText = totals.e.toFixed(2);
-            updateFinalNet();
+        db.ref('expenses').on('value', snap => {
+            data.e = 0; snap.forEach(c => { if(c.val().date === today) data.e += parseFloat(c.val().amount || 0); });
+            document.getElementById('todayExpenses').innerText = data.e.toFixed(2);
+            updateNet();
         });
     }
 
-    function updateFinalNet() {
+    function updateNet() {
         const s = parseFloat(document.getElementById('todaySales').innerText) || 0;
         const p = parseFloat(document.getElementById('todayPurchases').innerText) || 0;
         const e = parseFloat(document.getElementById('todayExpenses').innerText) || 0;
-        // المكسب الصافي
         document.getElementById('netProfit').innerText = (s - (p + e)).toFixed(2);
     }
 
