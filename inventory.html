@@ -9,16 +9,15 @@
     <style>
         :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
         body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 950px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
         #netStatus { text-align: center; padding: 5px; font-size: 12px; border-radius: 5px; margin-bottom: 10px; display: none; }
         .offline-msg { background: #ffebee; color: #c62828; display: block !important; }
 
         h2 { color: var(--maroon); text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
         
-        /* تحسين استجابة النموذج */
-        .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; width: 100%; }
         input:focus, select:focus { border-color: var(--maroon); }
         
         .btn-add { padding: 12px 20px; background: var(--maroon); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -28,10 +27,13 @@
         th { background: #f8f8f8; padding: 12px; text-align: right; color: var(--maroon); border-bottom: 2px solid #eee; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
         
-        .low-stock { background: #ffebee; color: #c62828; font-weight: bold; padding: 4px; border-radius: 4px; border: 1px solid #c62828; }
+        .low-stock { background: #ffebee; color: #c62828; font-weight: bold; padding: 4px 8px; border-radius: 4px; border: 1px solid #c62828; animation: blink 1.5s infinite; }
+        .extra-tag { background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; margin-left: 5px; }
+
+        @keyframes blink { 50% { opacity: 0.6; } }
 
         @media print {
-            .form-row, .btn-back, .delete-btn, #netStatus, .btn-print, a { display: none !important; }
+            .form-row, .delete-btn, #netStatus, .btn-print, a { display: none !important; }
             body { background: white; padding: 0; }
             .container { box-shadow: none; max-width: 100%; width: 100%; }
             table { border: 1px solid #000; width: 100%; }
@@ -41,27 +43,27 @@
 </head>
 <body>
 
-<div id="netStatus" class="offline-msg">⚠️ أنت تعمل الآن "أوفلاين" - سيتم مزامنة البيانات عند توفر النت</div>
+<div id="netStatus" class="offline-msg">⚠️ جاري المزامنة مع السحاب...</div>
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <a href="index.html" style="text-decoration:none; color:var(--gold); font-weight: bold;">⬅ رجوع للكاشير</a>
-        <button class="btn-add btn-print" onclick="window.print()">🖨 طباعة تقرير A4</button>
+        <button class="btn-add btn-print" onclick="window.print()">🖨 طباعة تقرير الجرد</button>
     </div>
     
-    <h2>📦 إدارة المخزن - شاهي وليف</h2>
+    <h2>📦 إدارة المخزن والإضافات - شاهي وليف</h2>
 
     <div class="form-row">
         <div style="display:flex; flex-direction:column;">
-            <label>اسم الصنف</label>
-            <input type="text" id="itemName" placeholder="مثلاً: نعناع حائل">
+            <label>اسم الصنف أو الإضافة</label>
+            <input type="text" id="itemName" placeholder="مثلاً: حليب مبخر">
         </div>
         <div style="display:flex; flex-direction:column;">
             <label>السعر (﷼)</label>
             <input type="number" id="itemPrice" placeholder="0.00" step="0.5">
         </div>
         <div style="display:flex; flex-direction:column;">
-            <label>الكمية</label>
+            <label>الكمية المتوفرة</label>
             <input type="number" id="itemQty" placeholder="0">
         </div>
         <div style="display:flex; flex-direction:column;">
@@ -70,48 +72,47 @@
                 <option value="tea">شاي</option>
                 <option value="karak">كرك</option>
                 <option value="bakery">مخبوزات</option>
-                <option value="sides">طلبات جانبية</option> <!-- أضفت لك القسم هنا -->
+                <option value="extras">إضافات ✨</option>
+                <option value="games">ألعاب 🎲</option>
             </select>
         </div>
-        <button class="btn-add" onclick="addItemToCloud()">إضافة للمخزن</button>
+        <button class="btn-add" onclick="addItemToCloud()">حفظ البيانات</button>
     </div>
 
     <table id="inventoryTable">
         <thead>
             <tr>
+                <th>النوع</th>
                 <th>الصنف</th>
                 <th>القسم</th>
                 <th>السعر</th>
-                <th>المتوفر</th>
+                <th>المتوفر حالياً</th>
                 <th class="delete-btn">إجراء</th>
             </tr>
         </thead>
         <tbody id="inventoryTableBody">
-            <tr><td colspan="5" style="text-align:center;">جاري تحميل بيانات المخزن...</td></tr>
+            <tr><td colspan="6" style="text-align:center;">جاري جرد المخزن...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // ربط قاعدة البيانات الخاصة بك
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // فحص الاتصال
     db.ref('.info/connected').on('value', (snap) => {
         const statusDiv = document.getElementById('netStatus');
         statusDiv.style.display = (snap.val() === true) ? 'none' : 'block';
     });
 
-    // إضافة منتج جديد للقاعدة
     function addItemToCloud() {
         const name = document.getElementById('itemName').value;
         const price = parseFloat(document.getElementById('itemPrice').value);
         const qty = parseInt(document.getElementById('itemQty').value);
         const cat = document.getElementById('itemCat').value;
 
-        if (!name || isNaN(price) || isNaN(qty)) return alert("أكمل البيانات أولاً");
+        if (!name || isNaN(price) || isNaN(qty)) return alert("يرجى إكمال جميع الحقول");
 
         db.ref('products').push({
             name: name, 
@@ -120,40 +121,43 @@
             cat: cat,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
-            // تصفير الحقول بعد الإضافة
             document.getElementById('itemName').value = '';
             document.getElementById('itemPrice').value = '';
             document.getElementById('itemQty').value = '';
-            alert("تمت إضافة " + name + " للمخزن بنجاح");
+            console.log("تمت الإضافة بنجاح");
         });
     }
 
-    // عرض البيانات وتحديثها لحظياً
     db.ref('products').on('value', (snapshot) => {
         const tableBody = document.getElementById('inventoryTableBody');
         tableBody.innerHTML = '';
         const data = snapshot.val();
         
         if (!data) { 
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">المخزن فارغ حالياً</td></tr>'; 
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا يوجد أصناف في المخزن</td></tr>'; 
             return; 
         }
 
         Object.keys(data).forEach(key => {
             const item = data[key];
-            const isLow = item.qty <= 5; // تنبيه إذا كانت الكمية 5 أو أقل
-            
-            // تحويل رمز القسم لاسم عربي
-            let catName = "غير مصنف";
-            if(item.cat === 'tea') catName = "شاي";
-            else if(item.cat === 'karak') catName = "كرك";
-            else if(item.cat === 'bakery') catName = "مخبوزات";
-            else if(item.cat === 'sides') catName = "إضافات ✨";
+            const isLow = item.qty <= 5;
+            const isExtra = item.cat === 'extras';
+
+            let catDisplayName = "أخرى";
+            const catMap = { 
+                'tea': 'شاي', 
+                'karak': 'كرك', 
+                'bakery': 'مخبوزات', 
+                'extras': 'إضافات', 
+                'games': 'ألعاب' 
+            };
+            catDisplayName = catMap[item.cat] || item.cat;
 
             tableBody.innerHTML += `
                 <tr>
+                    <td>${isExtra ? '<span class="extra-tag">إضافة</span>' : '📦 صنف'}</td>
                     <td><b>${item.name}</b></td>
-                    <td>${catName}</td>
+                    <td>${catDisplayName}</td>
                     <td>${item.price.toFixed(2)} ﷼</td>
                     <td><span class="${isLow ? 'low-stock' : ''}">${item.qty} وحدة</span></td>
                     <td class="delete-btn">
@@ -164,9 +168,8 @@
         });
     });
 
-    // حذف صنف
     function deleteItem(key) {
-        if(confirm('هل أنت متأكد من حذف هذا الصنف من المخزن؟')) {
+        if(confirm('حذف هذا الصنف نهائياً؟')) {
             db.ref('products/' + key).remove();
         }
     }
