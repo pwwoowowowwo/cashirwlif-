@@ -2,241 +2,303 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام حضور وحساب رواتب شاهي وليف</title>
+    <!-- منع المتصفح من تخزين الصفحة لضمان ظهور التحديثات فوراً -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>كاشير شاهي وليف - نظام البيع الذكي</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #fdfdfb; --green: #27ae60; --red: #c0392b; --blue: #2980b9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 900px; margin: auto; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .admin-entry-btn { background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        /* إضافة متغيرات ألوان جديدة لضمان تغيير الهوية البصرية */
+        :root { 
+            --maroon: #5a0000; 
+            --gold: #d4af37; 
+            --bg: #fdfdfd; 
+            --success: #27ae60;
+            --sidebar-w: 360px;
+        }
         
-        .staff-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); text-align: center; margin-bottom: 20px; }
-        select, .action-select { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; }
+        * { box-sizing: border-box; font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
         
-        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.3s; flex: 1; min-width: 140px; }
-        .btn-in { background: var(--green); }
-        .btn-out { background: var(--red); }
+        body { background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; color: #333; }
         
-        #adminArea { display: none; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
-        th { background: #f8f8f8; color: var(--maroon); }
+        header { 
+            height: 70px; 
+            background: linear-gradient(135deg, var(--maroon), #3d0000); 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 20px; 
+            justify-content: space-between; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
-        .pin-field { font-size: 24px; width: 120px; text-align: center; padding: 10px; border: 2px solid var(--gold); border-radius: 8px; margin-bottom: 15px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        
+        .back-link {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .back-link:hover { background: var(--gold); color: var(--maroon); transform: translateX(5px); }
+
+        .nav-links { display: flex; gap: 10px; }
+        .nav-btn { 
+            background: rgba(0,0,0,0.2); 
+            color: #eee; 
+            padding: 8px 15px; 
+            border-radius: 10px; 
+            text-decoration: none; 
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .app-main { display: flex; flex: 1; overflow: hidden; }
+        
+        /* قائمة المنتجات */
+        .products-section { flex: 1; display: flex; flex-direction: column; background: #f8f9fa; }
+        
+        .tabs-container { 
+            display: flex; 
+            padding: 15px; 
+            gap: 10px; 
+            overflow-x: auto; 
+            background: white;
+            border-bottom: 1px solid #eee;
+        }
+        .tab { 
+            padding: 10px 25px; 
+            border-radius: 12px; 
+            border: none; 
+            background: #eee; 
+            font-weight: bold; 
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+        .tab.active { background: var(--maroon); color: white; box-shadow: 0 4px 8px rgba(90,0,0,0.2); }
+        
+        .products-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 15px; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        
+        .p-card { 
+            background: white; 
+            border-radius: 20px; 
+            padding: 20px 10px; 
+            text-align: center; 
+            cursor: pointer; 
+            border: 1px solid #f0f0f0;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .p-card:active { transform: scale(0.95); background: #fffcf0; }
+        .p-card b { display: block; margin-bottom: 10px; font-size: 15px; color: #444; }
+        .p-card span { color: var(--maroon); font-weight: 800; font-size: 18px; }
+
+        /* سلة المبيعات */
+        .sidebar { 
+            width: var(--sidebar-w); 
+            background: white; 
+            border-right: 1px solid #eee; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.02);
+        }
+        
+        .customer-input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #f0f0f0; 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+        }
+        .customer-input:focus { border-color: var(--gold); }
+
+        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        .cart-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 12px 5px; 
+            border-bottom: 1px solid #f9f9f9; 
+            font-size: 14px;
+        }
+        .remove-icon { color: #e74c3c; cursor: pointer; padding: 0 5px; font-weight: bold; }
+
+        .checkout-card { 
+            background: #fffcf0; 
+            border: 1px solid #e0d5b5; 
+            padding: 20px; 
+            border-radius: 20px; 
+        }
+        .total-row { display: flex; justify-content: space-between; font-size: 26px; font-weight: 900; color: var(--maroon); margin-bottom: 15px; }
+        
+        .pay-methods { display: flex; gap: 8px; margin-bottom: 15px; }
+        .method-btn { flex: 1; padding: 10px 5px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .method-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
+
+        .btn-confirm { 
+            width: 100%; 
+            background: var(--success); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 15px; 
+            font-size: 20px; 
+            font-weight: bold; 
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        /* لضمان التحديث على الجوال */
+        @media (max-width: 900px) {
+            .app-main { flex-direction: column; }
+            .sidebar { width: 100%; height: 400px; border-right: none; border-top: 2px solid #eee; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="top-bar">
-        <div style="font-weight: bold; color: var(--maroon);">🌿 شاهي وليف</div>
-        <button class="admin-entry-btn" onclick="openPin()">🔐 لوحة المدير</button>
-    </div>
+    <header>
+        <div class="header-right">
+            <a href="index.html?v=1.1" class="back-link">
+                <span>🏠</span> الرئيسية
+            </a>
+            <h2 style="letter-spacing: 1px;">كاشير شاهي وليف</h2>
+        </div>
+        <div class="nav-links">
+            <a href="inventory.html" class="nav-btn">المخزن</a>
+            <a href="sales.html" class="nav-btn">السجل</a>
+        </div>
+    </header>
 
-    <!-- واجهة الموظف -->
-    <div class="staff-card">
-        <h2>نظام التحضير الذكي</h2>
-        <select id="staffSelector">
-            <option value="">-- اختر اسمك من القائمة --</option>
-        </select>
-
-        <div id="checkInArea">
-            <button class="btn btn-in" onclick="performAction('دخول')">تسجيل دخول ✅</button>
+    <div class="app-main">
+        <div class="products-section">
+            <div class="tabs-container" id="tabs">
+                <button class="tab active" onclick="filterCat('tea', this)">شاي</button>
+                <button class="tab" onclick="filterCat('karak', this)">كرك</button>
+                <button class="tab" onclick="filterCat('bakery', this)">مخبوزات</button>
+                <button class="tab" onclick="filterCat('extras', this)">إضافات</button>
+            </div>
+            <div class="products-grid" id="grid"></div>
         </div>
 
-        <div id="checkOutArea" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-            <p style="font-weight:bold; color:var(--maroon)">نوع الخروج الحالي:</p>
-            <select id="outType" class="action-select">
-                <option value="نهاية الشفت">نهاية الشفت (كامل)</option>
-                <option value="بريك صلاة">خروج للصلاة (يخصم 20 د)</option>
-                <option value="بريك عشاء">خروج للعشاء (يخصم 20 د)</option>
-            </select>
-            <button class="btn btn-out" onclick="performAction('خروج')">تأكيد الخروج 🏁</button>
-        </div>
-        
-        <p id="statusMsg" style="margin-top: 20px; font-weight: bold;"></p>
-    </div>
-
-    <!-- لوحة الإدارة -->
-    <div id="adminArea">
-        <h3 style="color: var(--maroon);">📊 تقارير الرواتب وساعات العمل</h3>
-        <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:15px;">
-            <input type="text" id="newName" placeholder="اسم الموظف" style="padding:8px; width:150px;">
-            <input type="number" id="newSalary" placeholder="الراتب الشهري" style="padding:8px; width:120px;">
-            <button onclick="addStaff()" style="padding:8px 15px; background:var(--maroon); color:white; border:none; border-radius:5px;">إضافة موظف</button>
-        </div>
-        
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>الموظف</th>
-                        <th>التاريخ</th>
-                        <th>ساعات العمل</th>
-                        <th>الخصم (د)</th>
-                        <th>المستحق اليومي</th>
-                        <th>الحالة</th>
-                        <th>حذف</th>
-                    </tr>
-                </thead>
-                <tbody id="reportTable"></tbody>
-            </table>
+        <div class="sidebar">
+            <input type="tel" class="customer-input" id="phone" placeholder="رقم جوال العميل (اختياري)">
+            <div class="cart-list" id="cartBody"></div>
+            
+            <div class="checkout-card">
+                <div class="total-row">
+                    <span>الإجمالي</span>
+                    <span><span id="totalTxt">0.00</span> ﷼</span>
+                </div>
+                <div class="pay-methods">
+                    <button class="method-btn active" onclick="setPay('نقدي', this)">💵 كاش</button>
+                    <button class="method-btn" onclick="setPay('شبكة', this)">💳 شبكة</button>
+                    <button class="method-btn" onclick="setPay('مختلط', this)">🔄 مختلط</button>
+                </div>
+                <button class="btn-confirm" onclick="checkout()">إتمام المبيعة ✅</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- مودال القفل -->
-<div id="pinModal" class="modal">
-    <div class="modal-box">
-        <h3>رمز المدير</h3>
-        <input type="password" id="pinInput" class="pin-field" maxlength="4">
-        <button onclick="checkPin()" style="width:100%; padding:10px; background:var(--maroon); color:white; border:none; border-radius:5px;">دخول</button>
-        <button onclick="closePin()" style="background:none; border:none; color:red; margin-top:10px;">إلغاء</button>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const MASTER_PIN = "1234";
-
-    // تحميل الموظفين
-    db.ref('staff').on('value', (snap) => {
-        const data = snap.val();
-        const selector = document.getElementById('staffSelector');
-        selector.innerHTML = '<option value="">-- اختر اسمك من القائمة --</option>';
-        if(data) {
-            Object.keys(data).forEach(id => {
-                selector.innerHTML += `<option value="${id}">${data[id].name}</option>`;
-            });
+    <script>
+        // دالة لفرض تحديث الصفحة إذا كان هناك إصدار جديد
+        const VERSION = "1.1";
+        if (localStorage.getItem('app_version') !== VERSION) {
+            localStorage.setItem('app_version', VERSION);
+            window.location.reload(true);
         }
-    });
 
-    // تبديل الواجهة عند اختيار الموظف
-    document.getElementById('staffSelector').addEventListener('change', function() {
-        const id = this.value;
-        if(!id) return;
-        db.ref('staff/' + id).once('value', (s) => {
-            if(s.val().status === 'داخل') {
-                document.getElementById('checkInArea').style.display = 'none';
-                document.getElementById('checkOutArea').style.display = 'block';
-            } else {
-                document.getElementById('checkInArea').style.display = 'block';
-                document.getElementById('checkOutArea').style.display = 'none';
-            }
+        const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let items = [], cart = [], currentCat = 'tea', method = 'نقدي';
+
+        // جلب البيانات مع مانع تخزين بسيط في الطلب
+        db.ref('products').on('value', snap => {
+            const data = snap.val();
+            items = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+            render();
         });
-    });
 
-    function performAction(type) {
-        const id = document.getElementById('staffSelector').value;
-        if(!id) return alert("اختر الاسم!");
-        
-        const now = Date.now();
-        const timeStr = new Date().toLocaleTimeString('ar-SA');
-        
-        if(type === 'دخول') {
-            db.ref('staff/' + id).update({ status: 'داخل', lastIn: now });
-            showMsg("✅ تم تسجيل دخولك بنجاح " + timeStr, "green");
-            document.getElementById('checkInArea').style.display = 'none';
-            document.getElementById('checkOutArea').style.display = 'block';
-        } else {
-            const outType = document.getElementById('outType').value;
-            db.ref('staff/' + id).once('value', (s) => {
-                const staffData = s.val();
-                const startTime = staffData.lastIn;
-                const endTime = now;
-                
-                // حساب الساعات
-                let diffMs = endTime - startTime;
-                let deductionMinutes = 0;
-                
-                if(outType === 'بريك صلاة' || outType === 'بريك عشاء') deductionMinutes = 20;
-                
-                let workingMinutes = (diffMs / (1000 * 60)) - deductionMinutes;
-                let workingHours = (workingMinutes / 60).toFixed(2);
-                
-                // حساب الراتب (30 يوم، 10 ساعات شفت)
-                const monthlySalary = staffData.salary;
-                const hourlyRate = monthlySalary / 30 / 10;
-                const dailyEarn = (workingHours * hourlyRate).toFixed(2);
-
-                // حفظ التقرير
-                db.ref('daily_reports').push({
-                    name: staffData.name,
-                    date: new Date().toLocaleDateString('ar-SA'),
-                    hours: workingHours,
-                    deduction: deductionMinutes,
-                    earn: dailyEarn,
-                    type: outType
-                });
-
-                db.ref('staff/' + id).update({ status: 'خارج' });
-                showMsg(`🏁 تم الخروج. العمل: ${workingHours} ساعة. المستحق: ${dailyEarn} ﷼`, "blue");
-                document.getElementById('checkInArea').style.display = 'block';
-                document.getElementById('checkOutArea').style.display = 'none';
-            });
+        function filterCat(c, btn) {
+            currentCat = c;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            render();
         }
-    }
 
-    function showMsg(m, color) {
-        const msg = document.getElementById('statusMsg');
-        msg.style.color = color;
-        msg.innerText = m;
-        setTimeout(() => { msg.innerText = ""; document.getElementById('staffSelector').value = ""; }, 5000);
-    }
-
-    // إدارة وتقارير
-    function openPin() { document.getElementById('pinModal').style.display = 'flex'; }
-    function closePin() { document.getElementById('pinModal').style.display = 'none'; }
-    function checkPin() {
-        if(document.getElementById('pinInput').value === MASTER_PIN) {
-            document.getElementById('adminArea').style.display = 'block';
-            loadReports();
-            closePin();
-        } else { alert("خطأ!"); }
-        document.getElementById('pinInput').value = '';
-    }
-
-    function addStaff() {
-        const name = document.getElementById('newName').value;
-        const salary = document.getElementById('newSalary').value;
-        if(name && salary) {
-            db.ref('staff').push({ name, salary, status: 'خارج' });
-            document.getElementById('newName').value = '';
-            document.getElementById('newSalary').value = '';
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = items.filter(i => i.cat === currentCat).map(i => `
+                <div class="p-card" onclick="add('${i.id}', '${i.name}', ${i.price})">
+                    <b>${i.name}</b>
+                    <span>${parseFloat(i.price).toFixed(2)} ﷼</span>
+                </div>
+            `).join('');
         }
-    }
 
-    function loadReports() {
-        db.ref('daily_reports').on('value', (snap) => {
-            const reports = snap.val();
-            const tbody = document.getElementById('reportTable');
-            tbody.innerHTML = '';
-            if(reports) {
-                Object.keys(reports).reverse().forEach(key => {
-                    const r = reports[key];
-                    tbody.innerHTML += `<tr>
-                        <td>${r.name}</td>
-                        <td>${r.date}</td>
-                        <td>${r.hours}</td>
-                        <td>${r.deduction}</td>
-                        <td style="font-weight:bold; color:green;">${r.earn} ﷼</td>
-                        <td>${r.type}</td>
-                        <td><button onclick="deleteReport('${key}')" style="border:none; color:red; background:none;">🗑</button></td>
-                    </tr>`;
-                });
-            }
-        });
-    }
+        function add(id, name, price) {
+            const ex = cart.find(c => c.id === id);
+            if(ex) ex.q++; else cart.push({id, name, price, q: 1});
+            updateUI();
+        }
 
-    function deleteReport(key) { if(confirm("حذف؟")) db.ref('daily_reports/' + key).remove(); }
-</script>
+        function updateUI() {
+            const b = document.getElementById('cartBody');
+            let t = 0;
+            b.innerHTML = cart.map((c, i) => {
+                t += c.price * c.q;
+                return `<div class="cart-row"><span>${c.name} (x${c.q})</span><b>${(c.price*c.q).toFixed(2)} <span class="remove-icon" onclick="rem(${i})">×</span></b></div>`;
+            }).join('');
+            document.getElementById('totalTxt').innerText = t.toFixed(2);
+        }
+
+        function rem(i) { cart.splice(i, 1); updateUI(); }
+        function setPay(m, b) { method = m; document.querySelectorAll('.method-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); }
+
+        async function checkout() {
+            const total = parseFloat(document.getElementById('totalTxt').innerText);
+            if(total <= 0) return;
+            
+            const sale = {
+                total, 
+                method, 
+                phone: document.getElementById('phone').value || "عميل",
+                items: cart,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            await db.ref('sales').push(sale);
+            alert("تم تسجيل العملية بنجاح ✅");
+            cart = [];
+            document.getElementById('phone').value = "";
+            updateUI();
+        }
+    </script>
 </body>
-</html>
