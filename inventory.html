@@ -16,83 +16,48 @@
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8f8f8; padding: 15px; text-align: right; color: var(--maroon); border-bottom: 2px solid #eee; }
         td { padding: 12px; border-bottom: 1px solid #f2f2f2; }
-        .low-stock { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 4px; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <header>
-        <a href="index.html" style="text-decoration:none; color:var(--maroon); font-weight:bold;">⬅ الكاشير</a>
-        <h2 style="color:var(--maroon);">📦 إدارة المخزن المطور</h2>
-        <button onclick="window.print()" style="background:var(--gold); border:none; color:white; padding:8px 15px; border-radius:6px; cursor:pointer;">طباعة تقرير</button>
-    </header>
-
-    <div class="form-grid">
-        <input type="text" id="pName" placeholder="اسم الصنف">
-        <input type="number" id="pPrice" placeholder="السعر">
-        <input type="number" id="pStock" placeholder="الكمية">
-        <select id="pCat">
-            <option value="tea">قسم الشاي</option>
-            <option value="karak">قسم الكرك</option>
-            <option value="bakery">قسم المخبوزات</option>
-            <option value="extras">قسم الإضافات</option>
-            <option value="games">أخرى</option>
-        </select>
-        <button class="btn-save" onclick="saveItem()">إضافة ✅</button>
+    <div class="container">
+        <header>
+            <a href="Cashier.html" style="text-decoration:none; color:var(--maroon); font-weight:bold;">⬅ الكاشير</a>
+            <h2 style="color:var(--maroon);">📦 إدارة المخزن</h2>
+            <button onclick="window.print()" style="background:var(--gold); border:none; color:white; padding:8px 15px; border-radius:6px; cursor:pointer;">تقرير الجرد</button>
+        </header>
+        <div class="form-grid">
+            <input type="text" id="pName" placeholder="اسم المنتج">
+            <input type="number" id="pPrice" placeholder="السعر">
+            <input type="number" id="pStock" placeholder="الكمية">
+            <select id="pCat">
+                <option value="tea">شاي</option>
+                <option value="karak">كرك</option>
+                <option value="bakery">مخبوزات</option>
+                <option value="extras">إضافات</option>
+                <option value="games">أخرى</option>
+            </select>
+            <button class="btn-save" onclick="saveItem()">إضافة ✅</button>
+        </div>
+        <table>
+            <thead><tr><th>الصنف</th><th>القسم</th><th>السعر</th><th>الكمية</th><th>حذف</th></tr></thead>
+            <tbody id="inventoryTable"></tbody>
+        </table>
     </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>الصنف</th>
-                <th>القسم</th>
-                <th>السعر</th>
-                <th>الكمية</th>
-                <th>حذف</th>
-            </tr>
-        </thead>
-        <tbody id="inventoryTable"></tbody>
-    </table>
-</div>
-
-<script>
-    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    function saveItem() {
-        const name = document.getElementById('pName').value;
-        const price = parseFloat(document.getElementById('pPrice').value);
-        const stock = parseInt(document.getElementById('pStock').value);
-        const cat = document.getElementById('pCat').value;
-        if(name && !isNaN(price)) {
-            db.ref('products').push({ name, price, stock, cat });
-            document.getElementById('pName').value = '';
-            document.getElementById('pPrice').value = '';
-            document.getElementById('pStock').value = '';
+    <script>
+        const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        function saveItem() {
+            const name = document.getElementById('pName').value, price = parseFloat(document.getElementById('pPrice').value), stock = parseInt(document.getElementById('pStock').value), cat = document.getElementById('pCat').value;
+            if(name && !isNaN(price)) { db.ref('products').push({ name, price, stock, cat }); }
         }
-    }
-
-    db.ref('products').on('value', snap => {
-        const data = snap.val();
-        const table = document.getElementById('inventoryTable');
-        table.innerHTML = '';
-        if(data) {
-            Object.keys(data).forEach(id => {
+        db.ref('products').on('value', snap => {
+            const data = snap.val(), table = document.getElementById('inventoryTable'); table.innerHTML = '';
+            if(data) Object.keys(data).forEach(id => {
                 const p = data[id];
-                const isLow = (p.stock || 0) <= 5;
-                table.innerHTML += `
-                    <tr>
-                        <td><b>${p.name}</b></td>
-                        <td>${p.cat}</td>
-                        <td>${p.price.toFixed(2)} ﷼</td>
-                        <td><span class="${isLow ? 'low-stock' : ''}">${p.stock || 0}</span></td>
-                        <td><button onclick="db.ref('products/${id}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
-                    </tr>`;
+                table.innerHTML += `<tr><td><b>${p.name}</b></td><td>${p.cat}</td><td>${p.price.toFixed(2)}</td><td>${p.stock || 0}</td><td><button onclick="db.ref('products/${id}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td></tr>`;
             });
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
