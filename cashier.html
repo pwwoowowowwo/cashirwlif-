@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>كاشير شاهي وليف - تفاصيل الضريبة</title>
+    <title>كاشير شاهي وليف - سلة مرنة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -11,51 +11,50 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        header { height: 55px; background: var(--maroon); color: white; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { height: 50px; background: var(--maroon); color: white; display: flex; align-items: center; padding: 0 15px; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .header-btns { display: flex; gap: 8px; }
-        .nav-btn { background: var(--gold); border: none; padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .print-btn { background: #2e7d32; border: none; padding: 8px 15px; border-radius: 6px; color: white; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .nav-btn { background: var(--gold); border: none; padding: 6px 12px; border-radius: 6px; color: white; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .print-btn { background: #2e7d32; border: none; padding: 6px 12px; border-radius: 6px; color: white; cursor: pointer; font-weight: bold; font-size: 12px; }
         
-        .main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; align-items: flex-start; }
+        .main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; align-items: flex-start; /* يمنع تمدد العناصر لأسفل الصفحة */ }
         
-        .menu-side { flex: 2.5; display: flex; flex-direction: column; gap: 10px; height: 100%; overflow-y: auto; }
-        .category-bar { display: flex; gap: 8px; position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
-        .cat-btn { padding: 12px 20px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; white-space: nowrap; }
+        .menu-side { flex: 2.2; display: flex; flex-direction: column; gap: 10px; height: 100%; overflow-y: auto; }
+        .category-bar { display: flex; gap: 8px; position: sticky; top: 0; background: var(--bg); z-index: 10; padding-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+        .cat-btn { padding: 10px 18px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; background: white; white-space: nowrap; font-size: 13px; }
         .cat-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
         
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-        .item-card { background: white; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee; cursor: pointer; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .item-card span { font-weight: bold; font-size: 14px; margin-bottom: 5px; }
-        .item-card b { color: var(--maroon); font-size: 16px; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+        .item-card { background: white; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee; cursor: pointer; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .item-card span { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
+        .item-card b { color: var(--maroon); font-size: 15px; }
 
-        /* السلة الممتدة والمنظمة */
+        /* السلة المرنة - تتوقف عند آخر محتوى */
         .cart-side { 
             flex: 1.8; 
-            min-height: 55%; 
-            max-height: 95%; 
             background: white; 
             border-radius: 15px; 
             display: flex; 
             flex-direction: column; 
-            padding: 15px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            padding: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            height: auto; /* الارتفاع يتحدد بالمحتوى */
+            max-height: 95vh; /* حد أقصى مع خاصية التمرير */
         }
 
-        .cart-items-container { flex: 1; overflow-y: auto; margin: 10px 0; border-top: 1px solid #f5f5f5; padding-top: 10px; }
-        .cart-row { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid #f9f9f9; gap: 4px; }
-        .cart-row-top { display: flex; justify-content: space-between; font-weight: bold; }
-        .cart-row-details { display: flex; justify-content: space-between; font-size: 12px; color: #666; }
+        .cart-items-container { overflow-y: auto; margin: 8px 0; border-top: 1px solid #f5f5f5; padding-top: 8px; max-height: 400px; }
+        .cart-row { display: flex; flex-direction: column; padding: 6px 0; border-bottom: 1px solid #f9f9f9; gap: 2px; }
+        .cart-row-top { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; }
+        .cart-row-details { display: flex; justify-content: space-between; font-size: 11px; color: #666; }
         
-        .summary-box { background: #fffcf0; padding: 12px; border-radius: 10px; border: 1px dashed var(--gold); margin-bottom: 10px; }
-        .summary-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
-        .total-line { display: flex; justify-content: space-between; font-weight: bold; color: var(--maroon); font-size: 22px; border-top: 1px solid #eee; pt: 5px; margin-top: 5px; }
+        .summary-box { background: #fffcf0; padding: 10px; border-radius: 10px; border: 1px dashed var(--gold); margin-top: 5px; }
+        .summary-line { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
+        .total-line { display: flex; justify-content: space-between; font-weight: bold; color: var(--maroon); font-size: 18px; border-top: 1px solid #eee; padding-top: 4px; margin-top: 4px; }
 
-        .payment-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
-        .pay-btn { padding: 10px; border: 1px solid #eee; border-radius: 8px; background: white; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .payment-box { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 8px 0; }
+        .pay-btn { padding: 8px; border: 1px solid #eee; border-radius: 6px; background: white; cursor: pointer; font-weight: bold; font-size: 11px; }
         .pay-btn.active { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
 
-        .btn-pay { width: 100%; background: #2e7d32; color: white; padding: 15px; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
+        .btn-pay { width: 100%; background: #2e7d32; color: white; padding: 12px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -63,14 +62,14 @@
 <header>
     <div class="header-btns">
         <button class="nav-btn" onclick="location.href='index.html'">↩ الرئيسية</button>
-        <button class="print-btn" onclick="testPrinter()">🖨 فحص الطابعة</button>
+        <button class="print-btn" onclick="window.print()">🖨 طباعة</button>
     </div>
-    <span>🌿 شاهي وليف | الكاشير المطور</span>
+    <span>🌿 شاهي وليف | كاشير</span>
 </header>
 
 <div class="main-layout">
     <div class="menu-side">
-        <div class="category-bar" id="catBar">
+        <div class="category-bar">
             <button class="cat-btn active" onclick="filterCat('tea', this)">شاي</button>
             <button class="cat-btn" onclick="filterCat('karak', this)">كرك</button>
             <button class="cat-btn" onclick="filterCat('bakery', this)">مخبوزات</button>
@@ -81,34 +80,25 @@
     </div>
 
     <div class="cart-side" id="cartSide">
-        <input type="tel" id="custPhone" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px; font-size:13px;" placeholder="رقم جوال العميل (اختياري)">
+        <div style="font-weight: bold; color: var(--maroon); font-size: 14px; margin-bottom: 5px;">سلة المشتريات</div>
         
         <div class="cart-items-container" id="cartList">
-            <p style="text-align:center; color:#ccc; margin-top:20px;">السلة فارغة</p>
+            <p style="text-align:center; color:#ccc; font-size: 12px;">أضف أصنافاً للبدء..</p>
         </div>
 
         <div class="summary-box">
-            <div class="summary-line">
-                <span>المجموع الفرعي:</span>
-                <span><span id="subTotal">0.00</span> ﷼</span>
-            </div>
-            <div class="summary-line">
-                <span>الضريبة (15%):</span>
-                <span><span id="taxAmount">0.00</span> ﷼</span>
-            </div>
-            <div class="total-line">
-                <span>الإجمالي النهائي:</span>
-                <span><span id="grandTotal">0.00</span> ﷼</span>
-            </div>
+            <div class="summary-line"><span>المجموع:</span><span><span id="subTotal">0.00</span> ﷼</span></div>
+            <div class="summary-line"><span>الضريبة (15%):</span><span><span id="taxAmount">0.00</span> ﷼</span></div>
+            <div class="total-line"><span>الإجمالي:</span><span><span id="grandTotal">0.00</span> ﷼</span></div>
         </div>
 
         <div class="payment-box">
-            <button class="pay-btn active" id="payCash" onclick="setPay('نقدي', this)">💵 كاش</button>
-            <button class="pay-btn" id="payCard" onclick="setPay('شبكة', this)">💳 شبكة</button>
+            <button class="pay-btn active" onclick="setPay('نقدي', this)">💵 كاش</button>
+            <button class="pay-btn" onclick="setPay('شبكة', this)">💳 شبكة</button>
             <button class="pay-btn" onclick="setPay('مختلط', this)">🔄 مختلط</button>
         </div>
 
-        <button class="btn-pay" onclick="finishSaleCloud()">إنهاء وطباعة ✅</button>
+        <button class="btn-pay" onclick="finishSale()">إنهاء الطلب ✅</button>
     </div>
 </div>
 
@@ -118,12 +108,6 @@
     const db = firebase.database();
 
     let cart = [], payMethod = "نقدي", currentCat = 'tea';
-
-    function testPrinter() {
-        const win = window.open('', '', 'width=300,height=400');
-        win.document.write('<div dir="rtl" style="text-align:center;"><h3>شاهي وليف</h3><p>اختبار تفاصيل الفاتورة</p></div>');
-        win.print(); win.close();
-    }
 
     function syncProducts() {
         db.ref('products').on('value', (snapshot) => {
@@ -141,29 +125,21 @@
         const filtered = (window.allProducts || []).filter(p => p.cat === cat);
         grid.innerHTML = filtered.map(p => `
             <div class="item-card" onclick="addToCart('${p.name}', ${p.price})">
-                <span>${p.name}</span><b>${p.price} ﷼</b>
+                <span>${p.name}</span><b>${p.price.toFixed(2)} ﷼</b>
             </div>`).join('');
     }
 
-    // منع التكرار وزيادة الكمية مع حفظ سعر الحبة
     function addToCart(name, price) {
         const existing = cart.find(item => item.name === name);
-        if (existing) {
-            existing.qty++;
-        } else {
-            cart.push({ name, price, qty: 1 });
-        }
+        if (existing) { existing.qty++; } else { cart.push({ name, price, qty: 1 }); }
         renderCart();
     }
 
     function renderCart() {
         const list = document.getElementById('cartList');
-        const cartSide = document.getElementById('cartSide');
         let total = 0;
-        
         if (cart.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:#ccc; margin-top:20px;">السلة فارغة</p>';
-            cartSide.style.height = '55%';
+            list.innerHTML = '<p style="text-align:center; color:#ccc; font-size: 12px;">أضف أصنافاً للبدء..</p>';
         } else {
             list.innerHTML = cart.map((item, i) => {
                 const itemTotal = item.price * item.qty;
@@ -172,7 +148,7 @@
                 <div class="cart-row">
                     <div class="cart-row-top">
                         <span>${item.name}</span>
-                        <span>${itemTotal.toFixed(2)} ﷼ <span onclick="removeFromCart(${i})" style="color:red; cursor:pointer; font-weight:normal;">✕</span></span>
+                        <span>${itemTotal.toFixed(2)} <span onclick="removeFromCart(${i})" style="color:red; cursor:pointer;">✕</span></span>
                     </div>
                     <div class="cart-row-details">
                         <span>سعر الحبة: ${item.price.toFixed(2)}</span>
@@ -180,48 +156,20 @@
                     </div>
                 </div>`;
             }).join('');
-            
-            if (cart.length > 4) cartSide.style.height = '95%';
         }
-
-        // حساب الضريبة والإجماليات
-        const subTotal = total / 1.15;
-        const tax = total - subTotal;
-
-        document.getElementById('subTotal').innerText = subTotal.toFixed(2);
-        document.getElementById('taxAmount').innerText = tax.toFixed(2);
+        const sub = total / 1.15;
+        document.getElementById('subTotal').innerText = sub.toFixed(2);
+        document.getElementById('taxAmount').innerText = (total - sub).toFixed(2);
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
 
     function removeFromCart(index) { cart.splice(index, 1); renderCart(); }
+    function setPay(m, btn) { payMethod = m; document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
 
-    function setPay(m, btn) {
-        payMethod = m;
-        document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
-    function finishSaleCloud() {
+    function finishSale() {
         if(cart.length === 0) return;
-        const total = parseFloat(document.getElementById('grandTotal').innerText);
-        const tax = parseFloat(document.getElementById('taxAmount').innerText);
-        
-        const saleRecord = {
-            amount: total,
-            taxAmount: tax,
-            method: payMethod,
-            customerPhone: document.getElementById('custPhone').value || "غير مسجل",
-            items: cart,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-
-        db.ref('sales').push(saleRecord).then(() => {
-            alert("تم تسجيل الفاتورة الضريبية ✅");
-            cart = []; 
-            document.getElementById('custPhone').value = "";
-            renderCart();
-            window.print();
-        });
+        db.ref('sales').push({ amount: parseFloat(document.getElementById('grandTotal').innerText), items: cart, timestamp: firebase.database.ServerValue.TIMESTAMP })
+        .then(() => { alert("تم الحفظ ✅"); cart = []; renderCart(); });
     }
 
     window.onload = syncProducts;
