@@ -64,7 +64,7 @@
         </div>
         <div style="display:flex; flex-direction:column;">
             <label>الكمية المتوفرة</label>
-            <input type="number" id="itemQty" placeholder="0">
+            <input type="number" id="itemStock" placeholder="0"> <!-- تم تغيير id ليصبح أوضح -->
         </div>
         <div style="display:flex; flex-direction:column;">
             <label>القسم</label>
@@ -109,21 +109,22 @@
     function addItemToCloud() {
         const name = document.getElementById('itemName').value;
         const price = parseFloat(document.getElementById('itemPrice').value);
-        const qty = parseInt(document.getElementById('itemQty').value);
+        const stock = parseInt(document.getElementById('itemStock').value);
         const cat = document.getElementById('itemCat').value;
 
-        if (!name || isNaN(price) || isNaN(qty)) return alert("يرجى إكمال جميع الحقول");
+        if (!name || isNaN(price) || isNaN(stock)) return alert("يرجى إكمال جميع الحقول");
 
+        // تم تغيير المفتاح إلى stock ليتناسب مع الكاشير
         db.ref('products').push({
             name: name, 
             price: price, 
-            qty: qty, 
+            stock: stock, 
             cat: cat,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         }).then(() => {
             document.getElementById('itemName').value = '';
             document.getElementById('itemPrice').value = '';
-            document.getElementById('itemQty').value = '';
+            document.getElementById('itemStock').value = '';
             console.log("تمت الإضافة بنجاح");
         });
     }
@@ -140,7 +141,9 @@
 
         Object.keys(data).forEach(key => {
             const item = data[key];
-            const isLow = item.qty <= 5;
+            // التحقق من الحقل سواء كان stock أو qty لضمان عدم ضياع البيانات القديمة
+            const currentStock = item.stock !== undefined ? item.stock : (item.qty !== undefined ? item.qty : 0);
+            const isLow = currentStock <= 5;
             const isExtra = item.cat === 'extras';
 
             let catDisplayName = "أخرى";
@@ -159,7 +162,7 @@
                     <td><b>${item.name}</b></td>
                     <td>${catDisplayName}</td>
                     <td>${item.price.toFixed(2)} ﷼</td>
-                    <td><span class="${isLow ? 'low-stock' : ''}">${item.qty} وحدة</span></td>
+                    <td><span class="${isLow ? 'low-stock' : ''}">${currentStock} وحدة</span></td>
                     <td class="delete-btn">
                         <button onclick="deleteItem('${key}')" style="background:none; border:none; color:red; cursor:pointer; font-size:18px;">✖</button>
                     </td>
@@ -168,6 +171,14 @@
         });
     });
 
+    function deleteItem(key) {
+        if(confirm('حذف هذا الصنف نهائياً؟')) {
+            db.ref('products/' + key).remove();
+        }
+    }
+</script>
+</body>
+</html>
     function deleteItem(key) {
         if(confirm('حذف هذا الصنف نهائياً؟')) {
             db.ref('products/' + key).remove();
