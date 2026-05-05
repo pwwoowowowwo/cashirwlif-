@@ -2,198 +2,213 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف | واجهة احترافية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة موظفي شاهي وليف</title>
+    <!-- Firebase Script -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        header { height: 45px; background: var(--maroon); color: white; display: flex; align-items: center; padding: 0 12px; justify-content: space-between; flex-shrink: 0; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f9f9f7; --green: #27ae60; --red: #c0392b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 800px; margin: auto; }
         
-        .main-layout { display: flex; flex: 1; overflow: hidden; width: 100%; }
+        /* الهيدر العلوي وفيه زر الإدارة الواضح */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .admin-entry-btn { background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .admin-entry-btn:hover { background: #4a0000; }
 
-        /* منطقة الأصناف */
-        .menu-side { flex: 1.5; display: flex; flex-direction: column; background: white; border-left: 1px solid #ddd; }
-        .category-bar { display: flex; gap: 6px; padding: 8px; overflow-x: auto; background: #f9f9f9; border-bottom: 1px solid #eee; flex-shrink: 0; }
-        .cat-btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: white; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .cat-btn.active { background: var(--maroon); color: white; }
+        /* واجهة الموظف */
+        .staff-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); text-align: center; margin-bottom: 20px; }
+        .staff-card h2 { color: var(--maroon); margin-bottom: 20px; font-size: 24px; }
+        select { width: 100%; max-width: 400px; padding: 15px; margin-bottom: 25px; border-radius: 10px; border: 2px solid #eee; font-size: 18px; background: #fff; cursor: pointer; }
+        .btn-group { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .action-btn { padding: 18px 45px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 20px; transition: 0.3s; flex: 1; max-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .in { background: var(--green); }
+        .out { background: var(--red); }
+        .action-btn:active { transform: scale(0.95); }
+
+        /* واجهة الإدارة المحمية */
+        #adminArea { display: none; margin-top: 30px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); animation: slideDown 0.4s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .items-scroll-area { flex: 1; overflow-y: auto; padding: 10px; }
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
-        .item-card { background: #fff; border-radius: 8px; padding: 15px 10px; border: 1px solid #eee; text-align: center; cursor: pointer; transition: 0.2s; }
-        .item-card:active { transform: scale(0.95); background: #f0f0f0; }
-
-        /* منطقة السلة المدمجة */
-        .cart-side { flex: 0.7; display: flex; flex-direction: column; background: #fff; padding: 10px; height: 100%; border-right: 1px solid #eee; min-width: 260px; }
-        .cart-items-scroll { height: 30%; overflow-y: auto; margin: 5px 0; border: 1px solid #f0f0f0; border-radius: 8px; flex-grow: 0; }
-        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 6px; border-bottom: 1px solid #f9f9f9; font-weight: bold; font-size: 12px; }
-        .remove-btn { color: white; border: none; background: #ff4444; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; font-weight: bold; }
-
-        /* قسم الحسابات والدفع */
-        .cart-footer { display: flex; flex-direction: column; gap: 5px; }
-        .summary-box { background: #fffcf0; padding: 6px; border-radius: 6px; border: 1px dashed var(--gold); font-size: 11px; }
-        .tax-line { display: flex; justify-content: space-between; color: #666; margin-bottom: 2px; }
-        .total-line { display: flex; justify-content: space-between; font-weight: 800; color: var(--maroon); font-size: 16px; border-top: 1px solid #ddd; padding-top: 3px; }
-
-        .pay-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-        .method-btn { padding: 8px 2px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .method-btn.active { background: var(--maroon); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: right; }
+        th { color: var(--maroon); background: #fcfcfc; border-bottom: 2px solid var(--gold); }
         
-        #mixedInputBox { display: none; background: #e3f2fd; padding: 6px; border-radius: 6px; }
-        .btn-pay-final { width: 100%; background: #2e7d32; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 5px; }
+        .add-box { background: #fcf8f0; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #eee; }
+        .add-box h4 { margin-top: 0; color: var(--maroon); margin-bottom: 15px; }
+        .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .input-row input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; flex: 1; min-width: 150px; font-size: 16px; }
+        .add-btn { background: var(--maroon); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        @media print { .no-print { display: none !important; } }
+        /* نافذة القفل (الرقم السري) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .modal-box { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .pin-field { font-size: 32px; width: 150px; text-align: center; padding: 10px; border: 3px solid var(--gold); border-radius: 12px; margin-bottom: 20px; letter-spacing: 10px; outline: none; }
     </style>
 </head>
 <body>
 
-<header>
-    <button onclick="location.href='index.html'" style="background:var(--gold); border:none; color:white; padding:4px 10px; border-radius:4px; cursor:pointer;">🏠</button>
-    <span style="font-size: 14px; font-weight: bold;">🌿 كاشير شاهي وليف</span>
-    <button class="no-print" onclick="window.print()" style="background:#444; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer;">🖨️</button>
-</header>
-
-<div class="main-layout">
-    <div class="menu-side">
-        <div class="category-bar">
-            <button class="cat-btn active" onclick="filterCat('tea', this)">شاي</button>
-            <button class="cat-btn" onclick="filterCat('karak', this)">كرك</button>
-            <button class="cat-btn" onclick="filterCat('bakery', this)">مخبوزات</button>
-            <button class="cat-btn" onclick="filterCat('extras', this)">إضافات</button>
-            <button class="cat-btn" onclick="filterCat('games', this)">طلبات جانبية</button>
-        </div>
-        <div class="items-scroll-area"><div id="itemsGrid" class="items-grid"></div></div>
+<div class="container">
+    <!-- البار العلوي فيه زر الإدارة -->
+    <div class="top-bar">
+        <div style="font-weight: bold; color: var(--maroon); font-size: 18px;">🌿 شاهي وليف</div>
+        <button class="admin-entry-btn" onclick="openPin()">
+            <span>🔐 دخول الإدارة</span>
+        </button>
     </div>
 
-    <div class="cart-side">
-        <div class="cart-items-scroll" id="cartList">
-            <p style="text-align:center; color:#ccc; padding:15px; font-size: 11px;">السلة فارغة</p>
+    <!-- قسم التحضير للموظفين -->
+    <div class="staff-card">
+        <h2>نظام الحضور والانصراف</h2>
+        <select id="staffNames">
+            <option value="">-- اختر اسمك من القائمة --</option>
+        </select>
+        <div class="btn-group">
+            <button class="action-btn in" onclick="logTime('حضور')">تسجيل دخول ✅</button>
+            <button class="action-btn out" onclick="logTime('انصراف')">تسجيل خروج 🏁</button>
+        </div>
+        <p id="msg" style="margin-top: 25px; font-weight: bold; font-size: 18px;"></p>
+    </div>
+
+    <!-- لوحة تحكم المدير (تظهر بعد الرقم السري) -->
+    <div id="adminArea">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: var(--maroon); margin: 0;">📊 لوحة تحكم المدير</h3>
+            <button onclick="closeAdmin()" style="background: #eee; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">إغلاق اللوحة ✖</button>
+        </div>
+        
+        <div class="add-box">
+            <h4>➕ إضافة موظف جديد</h4>
+            <div class="input-row">
+                <input type="text" id="nName" placeholder="اسم الموظف">
+                <input type="number" id="nSalary" placeholder="الراتب الشهري">
+                <button class="add-btn" onclick="addEmp()">إضافة الآن</button>
+            </div>
         </div>
 
-        <div class="cart-footer">
-            <div class="summary-box">
-                <div class="tax-line"><span>قبل الضريبة:</span><span><span id="subTotal">0.00</span> ﷼</span></div>
-                <div class="tax-line"><span>الضريبة (15%):</span><span><span id="taxAmount">0.00</span> ﷼</span></div>
-                <div class="total-line"><span>الإجمالي:</span><span><span id="grandTotal">0.00</span> ﷼</span></div>
-            </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>الموظف</th>
+                    <th>الحالة</th>
+                    <th>الراتب</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody id="empTable"></tbody>
+        </table>
+    </div>
+</div>
 
-            <div class="pay-options no-print">
-                <button class="method-btn active" onclick="setPayMethod('نقدي', this)">💵 كاش</button>
-                <button class="method-btn" onclick="setPayMethod('شبكة', this)">💳 شبكة</button>
-                <button class="method-btn" onclick="setPayMethod('مختلط', this)">🔄 مختلط</button>
-            </div>
-
-            <div id="mixedInputBox" class="no-print">
-                <input type="number" id="cashAmount" oninput="calcMixed()" placeholder="المبلغ الكاش" style="width:100%; padding:5px; font-size:11px; border-radius:4px; border:1px solid #ccc;">
-                <div style="font-size: 9px; margin-top:3px; color: #1565c0;">للشبكة: <b id="networkRemaining">0.00</b> ﷼</div>
-            </div>
-
-            <button class="btn-pay-final" onclick="completeSale()">إتمام الطلب ✅</button>
-        </div>
+<!-- نافذة طلب الرقم السري -->
+<div id="pinModal" class="modal">
+    <div class="modal-box">
+        <h3 style="margin-top: 0; color: var(--maroon);">رمز الأمان</h3>
+        <p style="color: #666; font-size: 14px;">أدخل رمز المدير للوصول للبيانات</p>
+        <input type="password" id="pinInput" class="pin-field" maxlength="4" placeholder="****">
+        <br>
+        <button onclick="checkPin()" style="width:100%; padding:15px; background: var(--maroon); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer;">تأكيد الدخول</button>
+        <button onclick="closePin()" style="background: none; border: none; color: #999; margin-top: 20px; cursor: pointer; text-decoration: underline;">رجوع للخلف</button>
     </div>
 </div>
 
 <script>
+    // إعدادات Firebase
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    let cart = [], currentMethod = 'نقدي', currentCat = 'tea';
 
-    function syncData() {
-        db.ref('products').on('value', (s) => {
-            const data = s.val();
-            window.allProducts = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
-            filterCat(currentCat, document.querySelector('.cat-btn.active'));
-        });
-    }
+    const MASTER_PIN = "1234"; // رمز المدير (يمكنك تغييره من هنا)
 
-    function filterCat(cat, btn) {
-        currentCat = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const items = (window.allProducts || []).filter(p => p.cat === cat);
-        document.getElementById('itemsGrid').innerHTML = items.map(p => `
-            <div class="item-card" onclick="addToCart('${p.id}', '${p.name}', ${p.price})">
-                <b style="font-size:11px; display:block;">${p.name}</b>
-                <small style="font-size:9px; color:var(--gold);">${p.price.toFixed(2)} ﷼</small>
-            </div>`).join('');
-    }
+    // جلب البيانات وتحديثها لحظياً
+    db.ref('staff').on('value', (snap) => {
+        const data = snap.val();
+        const select = document.getElementById('staffNames');
+        const table = document.getElementById('empTable');
+        
+        select.innerHTML = '<option value="">-- اختر اسمك من القائمة --</option>';
+        table.innerHTML = '';
 
-    function addToCart(id, name, price) {
-        const item = cart.find(i => i.id === id);
-        if (item) {
-            item.qty++;
-        } else {
-            cart.push({ id, name, price, qty: 1 });
-        }
-        renderCart();
-    }
-
-    function renderCart() {
-        let sub = 0;
-        const list = document.getElementById('cartList');
-        if (!cart.length) {
-            list.innerHTML = '<p style="text-align:center; color:#ccc; padding:15px; font-size: 11px;">السلة فارغة</p>';
-        } else {
-            list.innerHTML = cart.map((item, index) => {
-                sub += (item.price * item.qty);
-                return `<div class="cart-row">
-                    <button class="remove-btn" onclick="cart.splice(${index},1);renderCart();">✕</button>
-                    <span style="flex:1; margin-right:8px;">${item.name}</span>
-                    <span>x${item.qty}</span>
-                </div>`;
-            }).join('');
-        }
-        let tax = sub * 0.15;
-        let total = sub + tax;
-        document.getElementById('subTotal').innerText = sub.toFixed(2);
-        document.getElementById('taxAmount').innerText = tax.toFixed(2);
-        document.getElementById('grandTotal').innerText = total.toFixed(2);
-        calcMixed();
-    }
-
-    function setPayMethod(method, btn) {
-        currentMethod = method;
-        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('mixedInputBox').style.display = (method === 'مختلط') ? 'block' : 'none';
-    }
-
-    function calcMixed() {
-        const total = parseFloat(document.getElementById('grandTotal').innerText);
-        const cash = parseFloat(document.getElementById('cashAmount').value) || 0;
-        document.getElementById('networkRemaining').innerText = Math.max(0, total - cash).toFixed(2);
-    }
-
-    async function completeSale() {
-        if(!cart.length) return;
-        const updates = {};
-        cart.forEach(item => {
-            const p = window.allProducts.find(x => x.id === item.id);
-            if(p) {
-                // الخصم يتم هنا في الخلفية دون الحاجة لعرض الرقم في الكاشير
-                let currentStock = p.stock || p.quantity || 0;
-                updates[`/products/${item.id}/stock`] = currentStock - item.qty;
-            }
-        });
-        try {
-            await db.ref().update(updates);
-            await db.ref('sales').push({ 
-                total: document.getElementById('grandTotal').innerText, 
-                tax: document.getElementById('taxAmount').innerText,
-                payment: currentMethod,
-                items: cart, 
-                timestamp: Date.now() 
+        if(data) {
+            Object.keys(data).forEach(id => {
+                const e = data[id];
+                select.innerHTML += `<option value="${id}">${e.name}</option>`;
+                table.innerHTML += `<tr>
+                    <td><b>${e.name}</b></td>
+                    <td style="color:${e.status === 'حضور' ? 'green' : 'red'}; font-weight:bold;">${e.status || 'خارج'}</td>
+                    <td>${e.salary} ﷼</td>
+                    <td><button onclick="delEmp('${id}')" style="border:none; color:red; background:none; cursor:pointer; font-size:20px;">🗑</button></td>
+                </tr>`;
             });
-            window.print();
-            cart = []; document.getElementById('cashAmount').value = ''; renderCart();
-        } catch(e) { alert("خطأ في الشبكة"); }
+        }
+    });
+
+    // تسجيل الحضور والانصراف
+    function logTime(type) {
+        const id = document.getElementById('staffNames').value;
+        const msg = document.getElementById('msg');
+        if(!id) {
+            msg.style.color = "orange";
+            msg.innerText = "⚠️ يرجى اختيار اسمك أولاً";
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ar-SA');
+        
+        db.ref('staff/' + id).update({ status: type });
+        db.ref('logs/' + id).push({ 
+            type: type, 
+            time: timeStr, 
+            date: now.toLocaleDateString('ar-SA'),
+            timestamp: Date.now()
+        });
+
+        msg.style.color = type === 'حضور' ? "green" : "red";
+        msg.innerText = `✅ تم تسجيل ${type} لـ ${document.getElementById('staffNames').selectedOptions[0].text} الساعة ${timeStr}`;
+        
+        setTimeout(() => {
+            msg.innerText = "";
+            document.getElementById('staffNames').value = "";
+        }, 4000);
     }
 
-    window.onload = syncData;
+    // وظائف التحكم
+    function openPin() { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('pinInput').focus(); }
+    function closePin() { document.getElementById('pinModal').style.display = 'none'; }
+    function closeAdmin() { document.getElementById('adminArea').style.display = 'none'; }
+    
+    function checkPin() {
+        const input = document.getElementById('pinInput').value;
+        if(input === MASTER_PIN) {
+            document.getElementById('adminArea').style.display = 'block';
+            closePin();
+            window.scrollTo({ top: document.getElementById('adminArea').offsetTop - 20, behavior: 'smooth' });
+        } else {
+            alert("❌ الرمز السري غير صحيح!");
+        }
+        document.getElementById('pinInput').value = '';
+    }
+
+    function addEmp() {
+        const name = document.getElementById('nName').value;
+        const salary = document.getElementById('nSalary').value;
+        if(name && salary) {
+            db.ref('staff').push({ name, salary, status: 'خارج' });
+            document.getElementById('nName').value = '';
+            document.getElementById('nSalary').value = '';
+        } else {
+            alert("يرجى إدخال الاسم والراتب");
+        }
+    }
+
+    function delEmp(id) {
+        if(confirm("هل تريد حذف الموظف نهائياً من النظام؟")) {
+            db.ref('staff/' + id).remove();
+        }
+    }
 </script>
 </body>
 </html>
