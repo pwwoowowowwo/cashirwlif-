@@ -62,12 +62,12 @@
 <div class="main-layout">
     <div class="menu-side">
         <div class="category-bar">
-            <button class="cat-btn active" onclick="filterCat(event, 'tea')">شاي</button>
-            <button class="cat-btn" onclick="filterCat(event, 'karak')">كرك</button>
-            <button class="cat-btn" onclick="filterCat(event, 'bakery')">مخبوزات</button>
-            <button class="cat-btn" onclick="filterCat(event, 'extras')">إضافات</button>
-            <button class="cat-btn" onclick="filterCat(event, 'games')">الطلبات الجانبية</button>
-        </div>
+             <button class="cat-btn active" onclick="filterCat('tea', this)">شاي</button>
+             <button class="cat-btn" onclick="filterCat('karak', this)">كرك</button>
+             <button class="cat-btn" onclick="filterCat('bakery', this)">مخبوزات</button>
+             <button class="cat-btn" onclick="filterCat('extras', this)">إضافات</button>
+             <button class="cat-btn" onclick="filterCat('games', this)">الطلبات الجانبية</button>
+       </div>
         <div class="items-scroll-area"><div id="itemsGrid" class="items-grid"></div></div>
     </div>
 
