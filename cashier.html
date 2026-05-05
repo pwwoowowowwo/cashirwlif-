@@ -1,8 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- تم تعديل viewport للسماح بتكبير وتصغير الشاشة بالأصابع -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>كاشير شاهي وليف</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -75,7 +77,8 @@
 
         .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 15px; min-width: 300px; border-right: 1px solid #eee; }
         
-        .cart-items { height: 30%; overflow-y: auto; margin-bottom: 10px; border: 1px solid #f9f9f9; border-radius: 10px; }
+        /* تقليل طول منطقة عناصر السلة بنسبة 20% إضافية لتصبح أكثر رشاقة */
+        .cart-items { height: 25%; overflow-y: auto; margin-bottom: 10px; border: 1px solid #f9f9f9; border-radius: 10px; }
         
         .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 13px; }
         
@@ -106,7 +109,7 @@
                 <button class="cat-btn" onclick="changeCategory('karak', this)">كرك</button>
                 <button class="cat-btn" onclick="changeCategory('bakery', this)">مخبوزات</button>
                 <button class="cat-btn" onclick="changeCategory('extras', this)">إضافات</button>
-                <button class="cat-btn" onclick="changeCategory('games', this)">الطلبات الجانبية</button>
+                <button class="cat-btn" onclick="changeCategory('games', this)">ألعاب</button>
             </div>
             
             <div id="itemsGrid" class="items-grid"></div>
@@ -178,7 +181,7 @@
             }).join('');
         }
 
-        // تم تعديل الدالة لإضافة العناصر بغض النظر عن المخزون
+        // إضافة العناصر بغض النظر عن المخزون
         function addToCart(id, name, price) {
             const item = cart.find(c => c.id === id);
             if (item) {
@@ -231,7 +234,7 @@
             const updates = {};
             cart.forEach(item => {
                 const p = allProducts.find(prod => prod.id === item.id);
-                // يتم خصم الكمية من المخزون الموجود (حتى لو أصبح بالسالب)
+                // يتم خصم الكمية من المخزون الموجود حتى لو بالسالب
                 if (p) updates[`/products/${item.id}/stock`] = (p.stock || 0) - item.qty;
             });
 
