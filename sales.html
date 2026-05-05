@@ -3,143 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إحصائيات مبيعات شاهي وليف</title>
+    <title>سجل مبيعات شاهي وليف</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; --success: #2e7d32; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 20px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-back { background: #555; color: white; }
-        .btn-gold { background: var(--maroon); color: white; }
-        .btn-gold:hover { background: #4a0000; }
+        /* شريط علوي */
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; transition: 0.2s; }
+        .btn-back { background: #666; color: white; }
+        .btn-report { background: var(--maroon); color: white; }
 
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: #fff; padding: 20px; border-radius: 12px; border-top: 5px solid var(--gold); text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.05); }
-        .stat-card span { color: #666; font-size: 14px; font-weight: bold; }
-        .stat-card b { font-size: 24px; color: var(--maroon); display: block; margin-top: 5px; }
+        /* كروت الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 10px; border-right: 5px solid var(--gold); box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card span { font-size: 13px; color: #777; font-weight: bold; }
+        .stat-card b { font-size: 22px; color: var(--maroon); display: block; margin-top: 5px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #fdfaf4; padding: 15px; text-align: right; border-bottom: 2px solid var(--gold); color: var(--maroon); }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; color: #333; }
+        /* الجدول */
+        .table-wrapper { overflow-x: auto; background: #fff; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: #fdfaf4; padding: 15px; text-align: right; border-bottom: 2px solid #eee; color: var(--maroon); }
+        td { padding: 12px 15px; border-bottom: 1px solid #f2f2f2; font-size: 14px; vertical-align: middle; }
         
-        .payment-tag { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .method-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .cash { background: #e8f5e9; color: #2e7d32; }
         .card { background: #e3f2fd; color: #1565c0; }
 
-        .reprint-btn { background: white; color: var(--maroon); border: 1px solid var(--maroon); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .reprint-btn:hover { background: var(--maroon); color: white; }
-
-        #reportModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 95%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
+        /* مودال التقرير */
+        #reportModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-body { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; }
         
-        @media print { .no-print { display: none !important; } body { background: white; padding: 0; } .container { box-shadow: none; width: 100%; } }
+        @media print { .no-print { display: none !important; } body { padding: 0; } .container { box-shadow: none; width: 100%; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="top-bar no-print">
+    <div class="header-bar no-print">
         <div style="display:flex; gap:10px;">
-            <a href="pos.html" class="btn btn-back">⬅ شاشة الكاشير</a>
-            <button class="btn btn-gold" onclick="generateReport()">📊 جرد مبيعات اليوم</button>
+            <a href="index.html" class="btn btn-back">⬅ شاشة الكاشير</a>
+            <button class="btn btn-report" onclick="showDailyReport()">📊 تقرير جرد اليوم</button>
         </div>
-        <h2 style="color:var(--maroon); margin:0;">📈 سجل العمليات</h2>
+        <h2 style="color:var(--maroon); margin:0;">سجل العمليات</h2>
     </div>
 
-    <div class="stats-row no-print">
-        <div class="stat-card"><span>إجمالي دخل اليوم</span><br><b id="dayTotal">0.00</b></div>
-        <div class="stat-card"><span>عدد الطلبات</span><br><b id="dayOrders">0</b></div>
-        <div class="stat-card"><span>ضريبة القيمة المضافة</span><br><b id="dayTax">0.00</b></div>
-        <div class="stat-card"><span>متوسط الطلب</span><br><b id="dayAvg">0.00</b></div>
+    <!-- الإحصائيات اللحظية -->
+    <div class="stats-grid no-print">
+        <div class="stat-card"><span>مبيعات اليوم (شامل)</span><b id="dayTotal">0.00</b></div>
+        <div class="stat-card"><span>الضريبة (15%)</span><b id="dayTax">0.00</b></div>
+        <div class="stat-card"><span>إجمالي الطلبات</span><b id="dayOrders">0</b></div>
     </div>
 
-    <div style="overflow-x: auto;">
+    <!-- جدول العمليات -->
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
                     <th>الوقت</th>
-                    <th>نوع الدفع</th>
+                    <th>الدفع</th>
                     <th>الأصناف المباعة</th>
                     <th>الإجمالي</th>
                     <th class="no-print">إجراء</th>
                 </tr>
             </thead>
-            <tbody id="salesTableBody"></tbody>
+            <tbody id="salesTableBody">
+                <tr><td colspan="5" style="text-align:center; padding:30px; color:#999;">جاري تحميل العمليات...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <!-- مودال التقرير -->
 <div id="reportModal" class="no-print">
-    <div class="modal-content">
-        <div id="printableReport">
-            <div style="text-align:center; margin-bottom:20px;">
-                <h2 style="margin:0; color:var(--maroon);">🌿 تقرير جرد الأصناف</h2>
-                <p id="reportDate" style="color:#666; font-size:13px;"></p>
-            </div>
-            <hr border="1" style="border-style:dashed;">
-            <div id="reportArea"></div>
+    <div class="modal-body">
+        <div id="printArea">
+            <h3 style="text-align:center; color:var(--maroon); margin-bottom:5px;">شاهي وليف</h3>
+            <p style="text-align:center; font-size:12px; margin-top:0;">تقرير الجرد والمطابقة اليومية</p>
+            <hr>
+            <div id="reportData"></div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:20px;" class="no-print">
-            <button class="btn btn-gold" style="flex:1; justify-content:center;" onclick="window.print()">🖨 طباعة التقرير</button>
-            <button class="btn" style="flex:1; justify-content:center; background:#eee;" onclick="closeModal()">إغلاق</button>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-report" style="flex:1;" onclick="window.print()">🖨 طباعة</button>
+            <button class="btn btn-back" style="flex:1;" onclick="document.getElementById('reportModal').style.display='none'">إغلاق</button>
         </div>
     </div>
 </div>
 
 <script>
-    // إعدادات Firebase
+    // 1. إعدادات Firebase (تأكد أنها نفس إعدادات صفحة الكاشير)
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let allSales = [];
+    let salesData = [];
 
-    // استماع مباشر للمبيعات
+    // 2. الاستماع اللحظي للمبيعات
     db.ref('sales').on('value', (snap) => {
         const data = snap.val();
-        allSales = [];
+        salesData = [];
         if (!data) {
-            document.getElementById('salesTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد مبيعات مسجلة</td></tr>';
+            document.getElementById('salesTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد عمليات مسجلة</td></tr>';
             return;
         }
 
-        Object.keys(data).forEach(id => allSales.push({ id, ...data[id] }));
-        allSales.sort((a,b) => b.timestamp - a.timestamp); // الأحدث أولاً
+        // تحويل البيانات لمصفوفة وفرزها من الأحدث للأقدم
+        Object.keys(data).forEach(id => salesData.push({ id, ...data[id] }));
+        salesData.sort((a,b) => b.timestamp - a.timestamp);
         
-        renderUI();
+        renderSales();
     });
 
-    function renderUI() {
-        const todayStr = new Date().toDateString();
+    function renderSales() {
+        const today = new Date().toDateString();
         let total = 0, tax = 0, count = 0;
 
-        const html = allSales.map(s => {
-            const date = new Date(s.timestamp);
-            const isToday = date.toDateString() === todayStr;
+        const html = salesData.map(sale => {
+            const date = new Date(sale.timestamp);
+            const isToday = date.toDateString() === today;
             
             if(isToday) {
-                total += parseFloat(s.total);
-                // حساب الضريبة (إذا كان السعر شامل الضريبة) -> Total - (Total / 1.15)
-                // إذا كان السعر غير شامل -> Total * 0.15
-                tax += (parseFloat(s.total) - (parseFloat(s.total) / 1.15)); 
+                const sTotal = parseFloat(sale.total) || 0;
+                total += sTotal;
+                tax += (sTotal - (sTotal / 1.15)); // استخراج الضريبة من السعر الشامل
                 count++;
             }
 
-            const methodClass = s.method === 'نقدي' ? 'cash' : 'card';
+            const methodClass = sale.method === 'نقدي' ? 'cash' : 'card';
 
             return `<tr>
-                <td><b>${date.toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})}</b></td>
-                <td><span class="payment-tag ${methodClass}">${s.method || 'غير محدد'}</span></td>
-                <td><small>${s.items.map(i => i.name + ' ×' + i.qty).join('، ')}</small></td>
-                <td style="font-weight:bold; color:var(--maroon);">${parseFloat(s.total).toFixed(2)} ﷼</td>
-                <td class="no-print">
-                    <button class="reprint-btn" onclick="reprint('${s.id}')">🖨 إعادة طباعة</button>
-                </td>
+                <td><b>${date.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'})}</b></td>
+                <td><span class="method-badge ${methodClass}">${sale.method || 'نقدي'}</span></td>
+                <td><small>${sale.items ? sale.items.map(i => i.name + ' (' + i.qty + ')').join('، ') : '---'}</small></td>
+                <td style="font-weight:bold; color:var(--maroon);">${parseFloat(sale.total).toFixed(2)} ﷼</td>
+                <td class="no-print"><button onclick="reprint('${sale.id}')" style="cursor:pointer; border:1px solid #ddd; background:#fff; border-radius:4px;">🖨</button></td>
             </tr>`;
         }).join('');
         
@@ -147,70 +147,55 @@
         document.getElementById('dayTotal').innerText = total.toFixed(2) + " ﷼";
         document.getElementById('dayOrders').innerText = count;
         document.getElementById('dayTax').innerText = tax.toFixed(2) + " ﷼";
-        document.getElementById('dayAvg').innerText = count > 0 ? (total/count).toFixed(2) + " ﷼" : "0.00";
     }
 
-    function reprint(id) {
-        const s = allSales.find(x => x.id === id);
-        const win = window.open('', '', 'width=300,height=600');
-        win.document.write(`
-            <div dir="rtl" style="font-family:sans-serif; text-align:center; padding:10px;">
-                <h3>🌿 شاهي وليف</h3>
-                <p style="font-size:12px;">نسخة مكررة من الفاتورة</p>
-                <hr>
-                <div style="text-align:right; font-size:13px;">
-                    ${s.items.map(i => `<p>${i.name} x${i.qty} <span style="float:left;">${(i.price * i.qty).toFixed(2)}</span></p>`).join('')}
-                </div>
-                <hr>
-                <h4>الإجمالي: ${parseFloat(s.total).toFixed(2)} ﷼</h4>
-                <p style="font-size:11px;">طريقة الدفع: ${s.method}</p>
-                <p style="font-size:10px;">${new Date(s.timestamp).toLocaleString('ar-SA')}</p>
-            </div>
-        `);
-        win.print();
-        win.close();
-    }
-
-    function generateReport() {
-        const todayStr = new Date().toDateString();
+    // 3. دالة جرد الأصناف ومطابقة الصندوق
+    function showDailyReport() {
+        const today = new Date().toDateString();
         const summary = {};
-        let grandTotal = 0;
+        let cash = 0, network = 0;
 
-        allSales.forEach(s => {
-            if(new Date(s.timestamp).toDateString() === todayStr) {
+        salesData.forEach(s => {
+            if(new Date(s.timestamp).toDateString() === today) {
+                // حسبة المبالغ
+                if(s.method === 'نقدي') cash += parseFloat(s.total);
+                else if(s.method === 'شبكة') network += parseFloat(s.total);
+                else if(s.method === 'مختلط' && s.paymentDetails) {
+                    cash += parseFloat(s.paymentDetails.cash);
+                    network += parseFloat(s.paymentDetails.card);
+                }
+
+                // جرد الكميات
                 s.items.forEach(i => {
-                    if(!summary[i.name]) summary[i.name] = { q: 0, v: 0 };
-                    summary[i.name].q += i.qty;
-                    summary[i.name].v += (i.price * i.qty);
-                    grandTotal += (i.price * i.qty);
+                    if(!summary[i.name]) summary[i.name] = { qty: 0, val: 0 };
+                    summary[i.name].qty += i.qty;
+                    summary[i.name].val += (i.price * i.qty);
                 });
             }
         });
 
-        document.getElementById('reportDate').innerText = "تاريخ اليوم: " + new Date().toLocaleDateString('ar-SA');
-        
-        let html = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
-        html += '<tr style="background:#eee;"><th>الصنف</th><th>الكمية</th><th>القيمة</th></tr>';
-        
+        let html = '<table style="width:100%; font-size:12px; margin-top:10px;">';
+        html += '<tr style="border-bottom:1px solid #333;"><th>الصنف</th><th>الكمية</th><th>القيمة</th></tr>';
         for(let key in summary) {
-            html += `<tr style="border-bottom:1px solid #ddd;">
-                <td style="padding:8px 0;">${key}</td>
-                <td style="text-align:center;">${summary[key].q}</td>
-                <td style="text-align:left;">${summary[key].v.toFixed(2)}</td>
-            </tr>`;
+            html += `<tr style="border-bottom:1px solid #eee;"><td style="padding:5px 0;">${key}</td><td style="text-align:center;">${summary[key].qty}</td><td style="text-align:left;">${summary[key].val.toFixed(2)}</td></tr>`;
         }
-        
-        html += `<tr style="font-weight:bold; color:var(--maroon); border-top:2px solid #000;">
-            <td colspan="2" style="padding-top:10px;">إجمالي مبيعات اليوم</td>
-            <td style="text-align:left; padding-top:10px;">${grandTotal.toFixed(2)} ﷼</td>
-        </tr></table>`;
+        html += '</table>';
 
-        document.getElementById('reportArea').innerHTML = html;
+        html += `
+            <div style="margin-top:20px; padding:10px; background:#f9f9f9; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>💵 إجمالي الكاش:</span> <b>${cash.toFixed(2)}</b></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>💳 إجمالي الشبكة:</span> <b>${network.toFixed(2)}</b></div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; border-top:1px solid #ccc; padding-top:8px; font-weight:bold; color:var(--maroon);">
+                    <span>المجموع الكلي:</span> <span>${(cash + network).toFixed(2)} ﷼</span>
+                </div>
+            </div>`;
+
+        document.getElementById('reportData').innerHTML = html;
         document.getElementById('reportModal').style.display = 'flex';
     }
 
-    function closeModal() {
-        document.getElementById('reportModal').style.display = 'none';
+    function reprint(id) {
+        alert("وظيفة إعادة الطباعة للفاتورة: " + id);
     }
 </script>
 </body>
