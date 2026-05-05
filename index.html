@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- أيقونة البرنامج عند الحفظ على الشاشة الرئيسية -->
+    <!-- أيقونة البرنامج عند الحفظ على الشاشة الرئيسية لمتجر شاهي وليف -->
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
     <link rel="icon" href="https://raw.githubusercontent.com/shahi-walif/assets/main/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,6 +13,7 @@
 
     <title>لوحة تحكم شاهي وليف</title>
     
+    <!-- ربط مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
@@ -24,39 +25,41 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        /* تنبيه حالة الاتصال */
+        /* تنبيه حالة الاتصال الذكي */
         #offline-notice {
             display: none; width: 100%; background: var(--red); color: white;
-            text-align: center; padding: 5px; font-size: 12px; position: fixed; top: 0; z-index: 1000;
+            text-align: center; padding: 8px; font-size: 13px; position: fixed; top: 0; z-index: 1000; font-weight: bold;
         }
 
-        .header { text-align: center; margin-top: 20px; margin-bottom: 25px; }
-        .header h1 { color: var(--maroon); margin: 0; font-size: 30px; font-weight: 900; }
-        .header p { color: var(--gold); margin: 5px 0; font-weight: bold; font-size: 14px; }
+        .header { text-align: center; margin-top: 30px; margin-bottom: 25px; }
+        .header h1 { color: var(--maroon); margin: 0; font-size: 32px; font-weight: 900; }
+        .header p { color: var(--gold); margin: 5px 0; font-weight: bold; font-size: 15px; }
 
         .stats-grid { 
             width: 100%; max-width: 900px; display: grid; 
-            grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; 
+            grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; 
         }
         .stat-card { 
-            background: white; padding: 12px; border-radius: 18px; 
+            background: white; padding: 15px; border-radius: 18px; 
             text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
             border-bottom: 4px solid var(--gold);
         }
-        .stat-card.profit { border-bottom-color: var(--green); background: #fafffa; grid-column: span 3; margin-top: 5px; padding: 15px; }
-        .stat-card b { color: var(--maroon); font-size: 16px; font-weight: 900; }
-        .stat-card.profit b { color: var(--green); font-size: 22px; }
+        .stat-card.profit { border-bottom-color: var(--green); background: #fafffa; grid-column: span 3; margin-top: 5px; padding: 20px; }
+        .stat-card b { color: var(--maroon); font-size: 18px; font-weight: 900; }
+        .stat-card.profit b { color: var(--green); font-size: 26px; }
 
         .main-container { width: 100%; max-width: 900px; }
-        .sections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; width: 100%; }
+        .sections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; width: 100%; }
         
         .section-card { 
-            background: white; border-radius: 22px; padding: 20px 10px; 
+            background: white; border-radius: 22px; padding: 25px 10px; 
             text-decoration: none; border: 1px solid #f0f0f0; 
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            transition: 0.3s;
+            transition: transform 0.2s; color: #333;
         }
-        .icon-circle { width: 55px; height: 55px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 28px; }
+        .section-card:active { transform: scale(0.95); }
+        
+        .icon-circle { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 30px; }
 
         .cashier .icon-circle { background: #fff4e5; color: #f39c12; }
         .sales .icon-circle { background: #e8faf0; color: var(--green); }
@@ -71,29 +74,29 @@
 </head>
 <body>
 
-<div id="offline-notice">أنت تعمل الآن بدون إنترنت - سيتم حفظ البيانات محلياً</div>
+<div id="offline-notice">⚠️ أنت تعمل الآن بدون إنترنت - سيتم مزامنة البيانات تلقائياً عند الاتصال</div>
 
 <div class="header">
-    <div style="font-size:45px">🍃</div>
+    <div style="font-size:50px">🍃</div>
     <h1>شاهي وليف</h1>
     <p>نظام الإدارة المتكامل</p>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
-        <small>المبيعات 💰</small>
+        <small>المبيعات 💰</small><br>
         <b id="todaySales">0.00</b>
     </div>
     <div class="stat-card">
-        <small>المشتريات 🛒</small>
+        <small>المشتريات 🛒</small><br>
         <b id="todayPurchases" style="color:var(--blue)">0.00</b>
     </div>
     <div class="stat-card">
-        <small>المصاريف 💸</small>
+        <small>المصاريف 💸</small><br>
         <b id="todayExpenses" style="color:var(--red)">0.00</b>
     </div>
     <div class="stat-card profit">
-        <small>صافي الربح ✨</small>
+        <small>صافي الربح المتوقع ✨</small><br>
         <b id="netProfit">0.00</b> <small style="display:inline">﷼</small>
     </div>
 </div>
@@ -133,57 +136,60 @@
 </div>
 
 <script>
-    // تهيئة فايبربيز مع خاصية العمل أوفلاين
+    // تهيئة Firebase
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    // تفعيل حفظ البيانات محلياً (Persistence)
-    // ملاحظة: قاعدة بيانات Realtime Database تحفظ البيانات تلقائياً عند انقطاع الشبكة وترفعها فور عودتها
-    
     function syncData() {
         const today = new Date().toLocaleDateString('ar-SA');
         
-        // متابعة حالة الاتصال
+        // مراقبة حالة الاتصال بالإنترنت
         const connectedRef = db.ref(".info/connected");
         connectedRef.on("value", (snap) => {
-            if (snap.val() === true) {
-                document.getElementById('offline-notice').style.display = 'none';
-            } else {
-                document.getElementById('offline-notice').style.display = 'block';
-            }
+            document.getElementById('offline-notice').style.display = snap.val() === true ? 'none' : 'block';
         });
 
-        // جلب البيانات مع دعم التخزين المؤقت
-        ['sales', 'purchases', 'expenses'].forEach(path => {
+        // جلب وتحديث الإحصائيات لحظياً لمتجر "شاهي وليف"
+        const paths = ['sales', 'purchases', 'expenses'];
+        paths.forEach(path => {
             db.ref(path).on('value', snap => {
                 let total = 0;
-                snap.forEach(c => {
-                    if(c.val().date === today) total += parseFloat(c.val().amount || 0);
+                snap.forEach(child => {
+                    const data = child.val();
+                    if(data.date === today) {
+                        total += parseFloat(data.amount || 0);
+                    }
                 });
+                
                 if(path === 'sales') document.getElementById('todaySales').innerText = total.toFixed(2);
                 if(path === 'purchases') document.getElementById('todayPurchases').innerText = total.toFixed(2);
                 if(path === 'expenses') document.getElementById('todayExpenses').innerText = total.toFixed(2);
+                
                 calculateNet();
             });
         });
     }
 
     function calculateNet() {
-        const s = parseFloat(document.getElementById('todaySales').innerText) || 0;
-        const p = parseFloat(document.getElementById('todayPurchases').innerText) || 0;
-        const e = parseFloat(document.getElementById('todayExpenses').innerText) || 0;
-        document.getElementById('netProfit').innerText = (s - (p + e)).toFixed(2);
+        const sales = parseFloat(document.getElementById('todaySales').innerText) || 0;
+        const purchases = parseFloat(document.getElementById('todayPurchases').innerText) || 0;
+        const expenses = parseFloat(document.getElementById('todayExpenses').innerText) || 0;
+        const net = sales - (purchases + expenses);
+        document.getElementById('netProfit').innerText = net.toFixed(2);
+    }
+
+    // تسجيل Service Worker للعمل بدون إنترنت
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('نظام شاهي وليف جاهز للعمل أوفلاين ✅');
+            }).catch(err => console.log('فشل تسجيل الـ SW:', err));
+        });
     }
 
     window.onload = syncData;
-
-    // كود تشغيل البرنامج كتطبيق (Offline Service Worker)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed'));
-        });
-    }
 </script>
 </body>
 </html>
+
