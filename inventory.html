@@ -2,40 +2,44 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة المخزن - شاهي وليف</title>
+    <title>إدارة مخزن شاهي وليف</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f2; padding: 20px; }
-        .card { background: #fff; padding: 20px; border-radius: 10px; max-width: 800px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #630000; color: #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background: #f8f8f8; color: #630000; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f8f9fa; }
+        body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold); padding-bottom: 15px; margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr auto; gap: 10px; margin-bottom: 25px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-save { background: var(--maroon); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f8f8; padding: 15px; text-align: right; color: var(--maroon); border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #f2f2f2; }
+        .low-stock { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>📦 إدارة الأصناف والمخزن</h2>
-        <a href="index.html">العودة للكاشير</a>
-    </div>
+<div class="container">
+    <header>
+        <a href="index.html" style="text-decoration:none; color:var(--maroon); font-weight:bold;">⬅ الكاشير</a>
+        <h2 style="color:var(--maroon);">📦 إدارة المخزن المطور</h2>
+        <button onclick="window.print()" style="background:var(--gold); border:none; color:white; padding:8px 15px; border-radius:6px; cursor:pointer;">طباعة تقرير</button>
+    </header>
 
     <div class="form-grid">
         <input type="text" id="pName" placeholder="اسم الصنف">
         <input type="number" id="pPrice" placeholder="السعر">
         <input type="number" id="pStock" placeholder="الكمية">
         <select id="pCat">
-            <option value="tea">شاي</option>
-            <option value="karak">كرك</option>
-            <option value="bakery">مخبوزات</option>
-            <option value="extras">إضافات</option>
-            <option value="games">ألعاب</option>
+            <option value="tea">قسم الشاي</option>
+            <option value="karak">قسم الكرك</option>
+            <option value="bakery">قسم المخبوزات</option>
+            <option value="extras">قسم الإضافات</option>
+            <option value="games">أخرى</option>
         </select>
-        <button onclick="saveItem()">إضافة ✅</button>
+        <button class="btn-save" onclick="saveItem()">إضافة ✅</button>
     </div>
 
     <table>
@@ -44,17 +48,17 @@
                 <th>الصنف</th>
                 <th>القسم</th>
                 <th>السعر</th>
-                <th>المخزون</th>
+                <th>الكمية</th>
                 <th>حذف</th>
             </tr>
         </thead>
-        <tbody id="pTable"></tbody>
+        <tbody id="inventoryTable"></tbody>
     </table>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     function saveItem() {
@@ -62,8 +66,7 @@
         const price = parseFloat(document.getElementById('pPrice').value);
         const stock = parseInt(document.getElementById('pStock').value);
         const cat = document.getElementById('pCat').value;
-
-        if(name && price) {
+        if(name && !isNaN(price)) {
             db.ref('products').push({ name, price, stock, cat });
             document.getElementById('pName').value = '';
             document.getElementById('pPrice').value = '';
@@ -73,18 +76,19 @@
 
     db.ref('products').on('value', snap => {
         const data = snap.val();
-        const body = document.getElementById('pTable');
-        body.innerHTML = '';
+        const table = document.getElementById('inventoryTable');
+        table.innerHTML = '';
         if(data) {
             Object.keys(data).forEach(id => {
                 const p = data[id];
-                body.innerHTML += `
+                const isLow = (p.stock || 0) <= 5;
+                table.innerHTML += `
                     <tr>
-                        <td>${p.name}</td>
+                        <td><b>${p.name}</b></td>
                         <td>${p.cat}</td>
-                        <td>${p.price}</td>
-                        <td>${p.stock || 0}</td>
-                        <td><button onclick="db.ref('products/${id}').remove()" style="background:red;">🗑️</button></td>
+                        <td>${p.price.toFixed(2)} ﷼</td>
+                        <td><span class="${isLow ? 'low-stock' : ''}">${p.stock || 0}</span></td>
+                        <td><button onclick="db.ref('products/${id}').remove()" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></td>
                     </tr>`;
             });
         }
