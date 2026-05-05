@@ -2,165 +2,241 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تحضير شاهي وليف</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حضور وحساب رواتب شاهي وليف</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #fdfdfb; --green: #27ae60; --red: #c0392b; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f4f2; margin: 0; padding: 0; }
-
-        /* شريط علوي احترافي */
-        .header-bar { background: white; border-bottom: 3px solid var(--gold); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
-        .logo-text { font-weight: bold; color: var(--maroon); font-size: 18px; }
-        .admin-btn { background: var(--maroon); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-
-        .content { padding: 20px; max-width: 500px; margin: auto; }
-
-        /* البطاقة الرئيسية */
-        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; }
-        .card h2 { color: var(--maroon); font-size: 20px; margin-top: 0; margin-bottom: 10px; }
-        .card p { color: #888; font-size: 14px; margin-bottom: 25px; }
-
-        /* حقول الإدخال */
-        select { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #f0f0f0; font-size: 16px; background: #fafafa; margin-bottom: 20px; outline: none; appearance: none; text-align: center; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #fdfdfb; --green: #27ae60; --red: #c0392b; --blue: #2980b9; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 900px; margin: auto; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .admin-entry-btn { background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
-        /* الأزرار الكبيرة للجوال */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .action-btn { padding: 20px 10px; border: none; border-radius: 12px; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .staff-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); text-align: center; margin-bottom: 20px; }
+        select, .action-select { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; }
+        
+        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.3s; flex: 1; min-width: 140px; }
         .btn-in { background: var(--green); }
         .btn-out { background: var(--red); }
-        .action-btn:active { transform: translateY(3px); box-shadow: none; }
-
-        /* لوحة الإدارة */
-        #adminPanel { display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 15px; border: 1px solid #ddd; }
-        .staff-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .staff-table th, .staff-table td { padding: 10px; text-align: right; border-bottom: 1px solid #eee; font-size: 14px; }
-        .add-form { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .add-form input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
-
-        /* المودال */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:1000; }
-        .modal-content { background:white; padding:30px; border-radius:20px; width:85%; max-width:300px; text-align:center; }
-        .pin-input { font-size: 30px; width: 120px; text-align: center; padding: 10px; border: 2px solid var(--gold); border-radius: 10px; margin-bottom: 20px; letter-spacing: 5px; }
+        
+        #adminArea { display: none; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
+        th { background: #f8f8f8; color: var(--maroon); }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
+        .pin-field { font-size: 24px; width: 120px; text-align: center; padding: 10px; border: 2px solid var(--gold); border-radius: 8px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="header-bar">
-        <div class="logo-text">🌿 شاهي وليف</div>
-        <button class="admin-btn" onclick="openLogin()">🔐 دخول الإدارة</button>
+<div class="container">
+    <div class="top-bar">
+        <div style="font-weight: bold; color: var(--maroon);">🌿 شاهي وليف</div>
+        <button class="admin-entry-btn" onclick="openPin()">🔐 لوحة المدير</button>
     </div>
 
-    <div class="content">
-        <div class="card">
-            <h2>تحضير الموظفين</h2>
-            <p>يرجى اختيار اسمك لتسجيل وقتك</p>
-            
-            <select id="employeeList">
-                <option value="">-- اختر الموظف --</option>
+    <!-- واجهة الموظف -->
+    <div class="staff-card">
+        <h2>نظام التحضير الذكي</h2>
+        <select id="staffSelector">
+            <option value="">-- اختر اسمك من القائمة --</option>
+        </select>
+
+        <div id="checkInArea">
+            <button class="btn btn-in" onclick="performAction('دخول')">تسجيل دخول ✅</button>
+        </div>
+
+        <div id="checkOutArea" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+            <p style="font-weight:bold; color:var(--maroon)">نوع الخروج الحالي:</p>
+            <select id="outType" class="action-select">
+                <option value="نهاية الشفت">نهاية الشفت (كامل)</option>
+                <option value="بريك صلاة">خروج للصلاة (يخصم 20 د)</option>
+                <option value="بريك عشاء">خروج للعشاء (يخصم 20 د)</option>
             </select>
-
-            <div class="btn-grid">
-                <button class="action-btn btn-in" onclick="saveRecord('دخول')">دخول ✅</button>
-                <button class="action-btn btn-out" onclick="saveRecord('خروج')">خروج 🏁</button>
-            </div>
-
-            <div id="statusMsg" style="margin-top:20px; font-weight:bold;"></div>
+            <button class="btn btn-out" onclick="performAction('خروج')">تأكيد الخروج 🏁</button>
         </div>
+        
+        <p id="statusMsg" style="margin-top: 20px; font-weight: bold;"></p>
+    </div>
 
-        <!-- لوحة التحكم (مخفية) -->
-        <div id="adminPanel">
-            <h3 style="color:var(--maroon)">إدارة الطاقم والرواتب</h3>
-            <div class="add-form">
-                <input type="text" id="nName" placeholder="اسم الموظف">
-                <input type="number" id="nSalary" placeholder="الراتب">
-                <button onclick="addStaff()" style="width:100%; padding:10px; background:var(--gold); color:white; border:none; border-radius:5px; font-weight:bold;">إضافة موظف</button>
-            </div>
-            <table class="staff-table">
-                <thead><tr><th>الموظف</th><th>الحالة</th><th>الراتب</th></tr></thead>
-                <tbody id="staffDataTable"></tbody>
+    <!-- لوحة الإدارة -->
+    <div id="adminArea">
+        <h3 style="color: var(--maroon);">📊 تقارير الرواتب وساعات العمل</h3>
+        <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:15px;">
+            <input type="text" id="newName" placeholder="اسم الموظف" style="padding:8px; width:150px;">
+            <input type="number" id="newSalary" placeholder="الراتب الشهري" style="padding:8px; width:120px;">
+            <button onclick="addStaff()" style="padding:8px 15px; background:var(--maroon); color:white; border:none; border-radius:5px;">إضافة موظف</button>
+        </div>
+        
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>التاريخ</th>
+                        <th>ساعات العمل</th>
+                        <th>الخصم (د)</th>
+                        <th>المستحق اليومي</th>
+                        <th>الحالة</th>
+                        <th>حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTable"></tbody>
             </table>
-            <button onclick="this.parentElement.style.display='none'" style="width:100%; margin-top:20px; background:#eee; border:none; padding:10px; border-radius:5px;">إغلاق</button>
         </div>
     </div>
+</div>
 
-    <!-- نافذة الرقم السري -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <h4>رمز المدير</h4>
-            <input type="password" id="pinCode" class="pin-input" maxlength="4" placeholder="****">
-            <button onclick="verifyPin()" style="width:100%; padding:12px; background:var(--maroon); color:white; border:none; border-radius:10px; font-weight:bold;">دخول</button>
-            <button onclick="closeLogin()" style="margin-top:15px; background:none; border:none; color:red;">إلغاء</button>
-        </div>
+<!-- مودال القفل -->
+<div id="pinModal" class="modal">
+    <div class="modal-box">
+        <h3>رمز المدير</h3>
+        <input type="password" id="pinInput" class="pin-field" maxlength="4">
+        <button onclick="checkPin()" style="width:100%; padding:10px; background:var(--maroon); color:white; border:none; border-radius:5px;">دخول</button>
+        <button onclick="closePin()" style="background:none; border:none; color:red; margin-top:10px;">إلغاء</button>
     </div>
+</div>
 
 <script>
-    // إعدادات فايبريس الخاصة بك
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const MASTER_PIN = "1234";
 
-    const SECRET_PIN = "1234"; // رمز الإدارة
-
-    // تحديث البيانات
+    // تحميل الموظفين
     db.ref('staff').on('value', (snap) => {
         const data = snap.val();
-        const select = document.getElementById('employeeList');
-        const table = document.getElementById('staffDataTable');
-        select.innerHTML = '<option value="">-- اختر الموظف --</option>';
-        table.innerHTML = '';
+        const selector = document.getElementById('staffSelector');
+        selector.innerHTML = '<option value="">-- اختر اسمك من القائمة --</option>';
         if(data) {
             Object.keys(data).forEach(id => {
-                const emp = data[id];
-                select.innerHTML += `<option value="${id}">${emp.name}</option>`;
-                table.innerHTML += `<tr>
-                    <td>${emp.name}</td>
-                    <td style="color:${emp.status==='دخول'?'green':'red'}">${emp.status||'خارج'}</td>
-                    <td>${emp.salary}</td>
-                </tr>`;
+                selector.innerHTML += `<option value="${id}">${data[id].name}</option>`;
             });
         }
     });
 
-    function saveRecord(type) {
-        const id = document.getElementById('employeeList').value;
-        const msg = document.getElementById('statusMsg');
-        if(!id) return alert("اختر اسم الموظف!");
+    // تبديل الواجهة عند اختيار الموظف
+    document.getElementById('staffSelector').addEventListener('change', function() {
+        const id = this.value;
+        if(!id) return;
+        db.ref('staff/' + id).once('value', (s) => {
+            if(s.val().status === 'داخل') {
+                document.getElementById('checkInArea').style.display = 'none';
+                document.getElementById('checkOutArea').style.display = 'block';
+            } else {
+                document.getElementById('checkInArea').style.display = 'block';
+                document.getElementById('checkOutArea').style.display = 'none';
+            }
+        });
+    });
 
-        const time = new Date().toLocaleTimeString('ar-SA');
-        db.ref('staff/' + id).update({ status: type });
-        db.ref('logs/' + id).push({ type, time, date: new Date().toLocaleDateString('ar-SA') });
+    function performAction(type) {
+        const id = document.getElementById('staffSelector').value;
+        if(!id) return alert("اختر الاسم!");
+        
+        const now = Date.now();
+        const timeStr = new Date().toLocaleTimeString('ar-SA');
+        
+        if(type === 'دخول') {
+            db.ref('staff/' + id).update({ status: 'داخل', lastIn: now });
+            showMsg("✅ تم تسجيل دخولك بنجاح " + timeStr, "green");
+            document.getElementById('checkInArea').style.display = 'none';
+            document.getElementById('checkOutArea').style.display = 'block';
+        } else {
+            const outType = document.getElementById('outType').value;
+            db.ref('staff/' + id).once('value', (s) => {
+                const staffData = s.val();
+                const startTime = staffData.lastIn;
+                const endTime = now;
+                
+                // حساب الساعات
+                let diffMs = endTime - startTime;
+                let deductionMinutes = 0;
+                
+                if(outType === 'بريك صلاة' || outType === 'بريك عشاء') deductionMinutes = 20;
+                
+                let workingMinutes = (diffMs / (1000 * 60)) - deductionMinutes;
+                let workingHours = (workingMinutes / 60).toFixed(2);
+                
+                // حساب الراتب (30 يوم، 10 ساعات شفت)
+                const monthlySalary = staffData.salary;
+                const hourlyRate = monthlySalary / 30 / 10;
+                const dailyEarn = (workingHours * hourlyRate).toFixed(2);
 
-        msg.style.color = type === 'دخول' ? "green" : "red";
-        msg.innerText = `تم تسجيل ${type} الساعة ${time}`;
-        setTimeout(() => { msg.innerText = ""; document.getElementById('employeeList').value = ""; }, 3000);
+                // حفظ التقرير
+                db.ref('daily_reports').push({
+                    name: staffData.name,
+                    date: new Date().toLocaleDateString('ar-SA'),
+                    hours: workingHours,
+                    deduction: deductionMinutes,
+                    earn: dailyEarn,
+                    type: outType
+                });
+
+                db.ref('staff/' + id).update({ status: 'خارج' });
+                showMsg(`🏁 تم الخروج. العمل: ${workingHours} ساعة. المستحق: ${dailyEarn} ﷼`, "blue");
+                document.getElementById('checkInArea').style.display = 'block';
+                document.getElementById('checkOutArea').style.display = 'none';
+            });
+        }
     }
 
-    function openLogin() { document.getElementById('loginModal').style.display='flex'; }
-    function closeLogin() { document.getElementById('loginModal').style.display='none'; }
-    
-    function verifyPin() {
-        if(document.getElementById('pinCode').value === SECRET_PIN) {
-            document.getElementById('adminPanel').style.display = 'block';
-            closeLogin();
-            window.scrollTo(0, document.body.scrollHeight);
-        } else {
-            alert("خطأ!");
-        }
-        document.getElementById('pinCode').value = '';
+    function showMsg(m, color) {
+        const msg = document.getElementById('statusMsg');
+        msg.style.color = color;
+        msg.innerText = m;
+        setTimeout(() => { msg.innerText = ""; document.getElementById('staffSelector').value = ""; }, 5000);
+    }
+
+    // إدارة وتقارير
+    function openPin() { document.getElementById('pinModal').style.display = 'flex'; }
+    function closePin() { document.getElementById('pinModal').style.display = 'none'; }
+    function checkPin() {
+        if(document.getElementById('pinInput').value === MASTER_PIN) {
+            document.getElementById('adminArea').style.display = 'block';
+            loadReports();
+            closePin();
+        } else { alert("خطأ!"); }
+        document.getElementById('pinInput').value = '';
     }
 
     function addStaff() {
-        const name = document.getElementById('nName').value;
-        const salary = document.getElementById('nSalary').value;
+        const name = document.getElementById('newName').value;
+        const salary = document.getElementById('newSalary').value;
         if(name && salary) {
             db.ref('staff').push({ name, salary, status: 'خارج' });
-            document.getElementById('nName').value = '';
-            document.getElementById('nSalary').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newSalary').value = '';
         }
     }
+
+    function loadReports() {
+        db.ref('daily_reports').on('value', (snap) => {
+            const reports = snap.val();
+            const tbody = document.getElementById('reportTable');
+            tbody.innerHTML = '';
+            if(reports) {
+                Object.keys(reports).reverse().forEach(key => {
+                    const r = reports[key];
+                    tbody.innerHTML += `<tr>
+                        <td>${r.name}</td>
+                        <td>${r.date}</td>
+                        <td>${r.hours}</td>
+                        <td>${r.deduction}</td>
+                        <td style="font-weight:bold; color:green;">${r.earn} ﷼</td>
+                        <td>${r.type}</td>
+                        <td><button onclick="deleteReport('${key}')" style="border:none; color:red; background:none;">🗑</button></td>
+                    </tr>`;
+                });
+            }
+        });
+    }
+
+    function deleteReport(key) { if(confirm("حذف؟")) db.ref('daily_reports/' + key).remove(); }
 </script>
 </body>
 </html>
