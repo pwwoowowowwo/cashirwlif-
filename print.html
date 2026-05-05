@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>محرك طباعة شاهي وليف</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; width: 72mm; margin: 0; padding: 5px; }
+        .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; }
+        .receipt-title { font-size: 22px; font-weight: bold; margin: 5px 0; }
+        .info-row { display: flex; justify-content: space-between; font-size: 14px; margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th { border-bottom: 1px solid #000; text-align: right; font-size: 14px; }
+        td { padding: 5px 0; font-size: 14px; }
+        .total-section { border-top: 2px dashed #000; padding-top: 10px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+
+        /* لوحة التحكم - تظهر في الشاشة فقط */
+        #editorPanel { 
+            background: #f0f0f0; padding: 15px; border: 1px solid #ccc; 
+            margin-bottom: 20px; border-radius: 8px; width: 300px;
+        }
+        #editorPanel input, #editorPanel textarea { 
+            width: 100%; margin-bottom: 10px; padding: 5px; border: 1px solid #ddd;
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            body { width: 72mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- لوحة التحكم (مخفية عند الطباعة) -->
+<div id="editorPanel" class="no-print">
+    <h4 style="margin:0 0 10px 0;">⚙️ إعدادات الفاتورة</h4>
+    <label>اسم المحل:</label>
+    <input type="text" id="editTitle" oninput="updateLive()" value="🍃 شاهي وليف">
+    <label>نص الترويسة:</label>
+    <textarea id="editHeader" oninput="updateLive()">الرقم الضريبي: 1234567890&#10;فرع: الوجة</textarea>
+    <label>نص الخاتمة:</label>
+    <textarea id="editFooter" oninput="updateLive()">شكراً لزيارتكم! نتشرف بتقديم أفضل شاهي ومخبوزات لكم 🍃</textarea>
+    <button onclick="saveSettings()" style="width:100%; background:green; color:white; border:none; padding:8px; cursor:pointer;">حفظ الإعدادات 💾</button>
+</div>
+
+<div id="printArea">
+    <div class="receipt-header">
+        <div class="receipt-title" id="dispTitle">🍃 شاهي وليف</div>
+        <div id="dispHeader" style="white-space: pre-line; font-size: 12px;"></div>
+    </div>
+
+    <div id="orderInfo"></div>
+
+    <table>
+        <thead>
+            <tr><th>الصنف</th><th>السعر</th></tr>
+        </thead>
+        <tbody id="itemsList"></tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="total-row"><span>الإجمالي:</span><span id="grandTotal">0.00</span></div>
+        <div id="paymentDetails" style="font-size: 13px; margin-top: 5px;"></div>
+    </div>
+
+    <div class="footer">
+        <div id="dispFooter" style="white-space: pre-line;"></div>
+        <div style="height: 60px;"></div> <!-- لضمان خروج الورق للقص -->
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // تحميل الإعدادات المحفوظة
+    function loadSettings() {
+        const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
+            title: "🍃 شاهي وليف",
+            header: "الرقم الضريبي: 1234567890\nفرع: الوجة",
+            footer: "شكراً لزيارتكم! نتشرف بتقديم أفضل شاهي ومخبوزات لكم 🍃"
+        };
+        document.getElementById('editTitle').value = saved.title;
+        document.getElementById('editHeader').value = saved.header;
+        document.getElementById('editFooter').value = saved.footer;
+        updateLive();
+    }
+
+    function updateLive() {
+        document.getElementById('dispTitle').innerText = document.getElementById('editTitle').value;
+        document.getElementById('dispHeader').innerText = document.getElementById('editHeader').value;
+        document.getElementById('dispFooter').innerText = document.getElementById('editFooter').value;
+    }
+
+    function saveSettings() {
+        const settings = {
+            title: document.getElementById('editTitle').value,
+            header: document.getElementById('editHeader').value,
+            footer: document.getElementById('editFooter').value
+        };
+        localStorage.setItem('receiptSettings', JSON.stringify(settings));
+        alert("تم حفظ التعديلات بنجاح! ✅");
+    }
+
+    // استقبال الطلبات من الفايربيس
+    db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
+        const order = snapshot.val();
+        renderReceipt(order);
+    });
+
+    function renderReceipt(order) {
+        document.getElementById('orderInfo').innerHTML = `
+            <div class="info-row"><span>التاريخ:</span> <span>${order.date}</span></div>
+            <div class="info-row"><span>العميل:</span> <span>${order.customer}</span></div>
+            <div class="info-row"><span>طريقة الدفع:</span> <span>${order.method.split('(')[0]}</span></div>
+        `;
+
+        document.getElementById('itemsList').innerHTML = order.items.map(item => `
+            <tr><td>${item.name}</td><td>${item.price.toFixed(2)} ﷼</td></tr>
+        `).join('');
+
+        document.getElementById('grandTotal').innerText = order.amount.toFixed(2) + " ﷼";
+        
+        if (order.paymentDetails) {
+            document.getElementById('paymentDetails').innerHTML = `
+                <div>• نقدي: ${order.paymentDetails.cash.toFixed(2)} ﷼</div>
+                <div>• شبكة: ${order.paymentDetails.card.toFixed(2)} ﷼</div>
+            `;
+        }
+
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    window.onload = loadSettings;
+</script>
+</body>
+</html>
