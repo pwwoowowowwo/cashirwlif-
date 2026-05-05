@@ -25,7 +25,6 @@
             background: #fff; 
             border-bottom: 2px solid #eee; 
             flex-shrink: 0;
-            -ms-overflow-style: none;
             scrollbar-width: none;
         }
         .category-bar::-webkit-scrollbar { display: none; }
@@ -62,7 +61,7 @@
         .item-card { 
             background: #fff; 
             border-radius: 12px; 
-            padding: 15px 8px; 
+            padding: 20px 8px; 
             border: 1px solid #eee; 
             text-align: center; 
             cursor: pointer; 
@@ -71,23 +70,18 @@
             transition: transform 0.1s;
         }
         .item-card:active { transform: scale(0.95); }
-        
-        .stock-tag { 
-            position: absolute; 
-            top: 5px; 
-            left: 5px; 
-            font-size: 10px; 
-            background: #f0f0f0; 
-            padding: 2px 6px; 
-            border-radius: 6px; 
-            color: #666;
-        }
+
+        /* تم إخفاء تاغ المخزون بناءً على طلبك */
+        .stock-tag { display: none; }
 
         .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 15px; min-width: 300px; border-right: 1px solid #eee; }
-        .cart-items { flex: 1; overflow-y: auto; margin-bottom: 10px; border: 1px solid #f9f9f9; border-radius: 10px; }
-        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
         
-        .cart-footer { background: #fffcf5; padding: 15px; border-radius: 15px; border: 1px solid var(--gold); }
+        /* تعديل ارتفاع السلة ليكون 30% فقط (تصغير بنسبة 70%) */
+        .cart-items { height: 30%; overflow-y: auto; margin-bottom: 10px; border: 1px solid #f9f9f9; border-radius: 10px; }
+        
+        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 13px; }
+        
+        .cart-footer { background: #fffcf5; padding: 15px; border-radius: 15px; border: 1px solid var(--gold); flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
         .total-line { display: flex; justify-content: space-between; font-weight: 900; color: var(--maroon); font-size: 20px; border-top: 2px solid #e0d5b5; padding-top: 10px; margin-top: 8px; }
         
         .btn-pay { width: 100%; background: #2e7d32; color: white; padding: 15px; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 15px; }
@@ -121,12 +115,12 @@
         </div>
 
         <div class="cart-side">
-            <h3 style="margin-bottom:15px; color:var(--maroon);">🛒 الطلب الحالي</h3>
+            <h3 style="margin-bottom:10px; color:var(--maroon); font-size: 16px;">🛒 السلة</h3>
             <div id="cartList" class="cart-items"></div>
             
             <div class="cart-footer">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>المجموع المبدئي:</span><span id="subTotal">0.00</span></div>
-                <div style="display:flex; justify-content:space-between;"><span>ضريبة القيمة المضافة (15%):</span><span id="taxAmount">0.00</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size: 14px;"><span>المجموع المبدئي:</span><span id="subTotal">0.00</span></div>
+                <div style="display:flex; justify-content:space-between; font-size: 14px;"><span>الضريبة (15%):</span><span id="taxAmount">0.00</span></div>
                 <div class="total-line"><span>الإجمالي:</span><span><span id="grandTotal">0.00</span> ﷼</span></div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:15px;">
@@ -154,14 +148,12 @@
             document.getElementById('offlineAlert').style.display = snap.val() ? 'none' : 'block';
         });
 
-        // جلب البيانات مع المزامنة اللحظية
         db.ref('products').on('value', snap => {
             const data = snap.val();
             allProducts = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
             renderItems(); 
         });
 
-        // دالة تغيير القسم - تم التأكد من أنها تعمل فورياً
         function changeCategory(cat, btn) {
             currentCat = cat;
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -174,7 +166,7 @@
             const filtered = allProducts.filter(p => p.cat === currentCat);
             
             if (filtered.length === 0) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#aaa;">لا يوجد أصناف حالياً</div>`;
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#aaa;">لا يوجد أصناف</div>`;
                 return;
             }
 
@@ -183,8 +175,7 @@
                 const price = parseFloat(p.price) || 0;
                 return `
                 <div class="item-card" onclick="addToCart('${p.id}', '${p.name}', ${price}, ${stock})">
-                    <span class="stock-tag">📦 ${stock}</span>
-                    <div style="font-weight:bold; margin-top:10px; min-height:35px;">${p.name}</div>
+                    <div style="font-weight:bold; margin-top:5px; min-height:35px; font-size:14px;">${p.name}</div>
                     <div style="color:var(--maroon); font-weight:900; margin-top:5px;">${price.toFixed(2)} ﷼</div>
                 </div>`;
             }).join('');
@@ -193,10 +184,10 @@
         function addToCart(id, name, price, stock) {
             const item = cart.find(c => c.id === id);
             if (item) {
-                if (item.qty >= stock) return alert("الكمية انتهت من المخزن!");
+                if (item.qty >= stock) return alert("المخزون غير كافٍ!");
                 item.qty++;
             } else {
-                if (stock <= 0) return alert("الصنف نفد من المخزن!");
+                if (stock <= 0) return alert("الصنف نفد!");
                 cart.push({id, name, price, qty: 1});
             }
             updateCart();
@@ -207,7 +198,7 @@
             let sub = 0;
             
             if (cart.length === 0) {
-                list.innerHTML = `<p style="text-align:center; color:#ccc; margin-top:50px;">السلة فارغة</p>`;
+                list.innerHTML = `<p style="text-align:center; color:#ccc; margin-top:20px; font-size:12px;">السلة فارغة</p>`;
             } else {
                 list.innerHTML = cart.map((item, idx) => {
                     const lineTotal = item.price * item.qty;
@@ -215,7 +206,7 @@
                     return `
                     <div class="cart-row">
                         <span onclick="removeItem(${idx})" style="color:#ff4444; cursor:pointer;">✕</span>
-                        <span style="flex:1; margin:0 10px;">${item.name} (x${item.qty})</span>
+                        <span style="flex:1; margin:0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.name} (x${item.qty})</span>
                         <span>${lineTotal.toFixed(2)}</span>
                     </div>`;
                 }).join('');
@@ -255,11 +246,11 @@
                     method: payMethod,
                     timestamp: Date.now()
                 });
-                alert("تم الطلب بنجاح! ✅");
+                alert("تم إتمام الطلب بنجاح! ✅");
                 cart = [];
                 updateCart();
             } catch (err) {
-                alert("خطأ في الاتصال!");
+                alert("خطأ في تحديث البيانات!");
             }
         }
     </script>
