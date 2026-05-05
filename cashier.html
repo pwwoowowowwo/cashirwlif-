@@ -71,12 +71,10 @@
         }
         .item-card:active { transform: scale(0.95); }
 
-        /* تم إخفاء تاغ المخزون بناءً على طلبك */
         .stock-tag { display: none; }
 
         .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 15px; min-width: 300px; border-right: 1px solid #eee; }
         
-        /* تعديل ارتفاع السلة ليكون 30% فقط (تصغير بنسبة 70%) */
         .cart-items { height: 30%; overflow-y: auto; margin-bottom: 10px; border: 1px solid #f9f9f9; border-radius: 10px; }
         
         .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 13px; }
@@ -171,23 +169,21 @@
             }
 
             grid.innerHTML = filtered.map(p => {
-                const stock = p.stock || 0;
                 const price = parseFloat(p.price) || 0;
                 return `
-                <div class="item-card" onclick="addToCart('${p.id}', '${p.name}', ${price}, ${stock})">
+                <div class="item-card" onclick="addToCart('${p.id}', '${p.name}', ${price})">
                     <div style="font-weight:bold; margin-top:5px; min-height:35px; font-size:14px;">${p.name}</div>
                     <div style="color:var(--maroon); font-weight:900; margin-top:5px;">${price.toFixed(2)} ﷼</div>
                 </div>`;
             }).join('');
         }
 
-        function addToCart(id, name, price, stock) {
+        // تم تعديل الدالة لإضافة العناصر بغض النظر عن المخزون
+        function addToCart(id, name, price) {
             const item = cart.find(c => c.id === id);
             if (item) {
-                if (item.qty >= stock) return alert("المخزون غير كافٍ!");
                 item.qty++;
             } else {
-                if (stock <= 0) return alert("الصنف نفد!");
                 cart.push({id, name, price, qty: 1});
             }
             updateCart();
@@ -235,6 +231,7 @@
             const updates = {};
             cart.forEach(item => {
                 const p = allProducts.find(prod => prod.id === item.id);
+                // يتم خصم الكمية من المخزون الموجود (حتى لو أصبح بالسالب)
                 if (p) updates[`/products/${item.id}/stock`] = (p.stock || 0) - item.qty;
             });
 
