@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; --green: #2e7d32; }
         * { box-sizing: border-box; font-family: 'Segoe UI', 'Arial', sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
@@ -15,34 +15,59 @@
         .nav-btns { display: flex; gap: 8px; }
         .nav-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--gold); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; }
 
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 8px; border: 1px solid #fff; }
+        .online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .offline { background: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
+
         .main-layout { display: flex; flex: 1; overflow: hidden; width: 100%; }
+        
+        /* الجهة اليمنى: الأصناف */
         .menu-side { flex: 1.4; display: flex; flex-direction: column; background: white; border-left: 1px solid #ddd; overflow: hidden; }
         .category-bar { display: flex; gap: 10px; padding: 12px; overflow-x: auto; background: #fff; border-bottom: 2px solid #eee; flex-shrink: 0; scrollbar-width: none; }
         .cat-btn { padding: 12px 24px; border-radius: 10px; border: 2px solid #f0f0f0; background: #f8f8f8; font-weight: bold; cursor: pointer; white-space: nowrap; color: #555; }
         .cat-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 15px; overflow-y: auto; align-content: start; flex: 1; }
         .item-card { background: #fff; border-radius: 12px; padding: 20px 8px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
-        /* الجهة اليسرى */
-        .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 15px; min-width: 320px; border-right: 1px solid #eee; height: 100%; }
-        
-        /* تعديل الطول ليكون 50% تقريباً من المساحة المتاحة للسلة */
-        .cart-items { height: 45%; overflow-y: auto; margin: 5px 0; border: 1px solid #f9f9f9; border-radius: 10px; flex-shrink: 0; }
-        
-        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 13px; }
-        .cart-row span:first-child { color: #e74c3c; cursor: pointer; padding: 0 5px; font-weight: 900; }
-        
-        /* تذييل السلة */
-        .cart-footer { background: #fffcf5; padding: 10px; border-radius: 15px; border: 1px solid var(--gold); flex: 1; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
-        .total-line { display: flex; justify-content: space-between; font-weight: 900; color: var(--maroon); font-size: 18px; padding-top: 5px; margin-top: 2px; border-top: 2px solid #e0d5b5; }
-        
-        /* تفاصيل الضريبة */
-        .tax-info { font-size: 11px; color: #666; display: flex; flex-direction: column; gap: 3px; margin-top: 5px; }
-        .tax-line { display: flex; justify-content: space-between; }
 
-        .btn-pay { width: 100%; background: #2e7d32; color: white; padding: 12px; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 8px; }
-        .method-btn { padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-weight: bold; font-size: 12px; }
-        .method-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
+        /* الجهة اليسرى: السلة والدفع */
+        .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 10px; min-width: 350px; border-right: 1px solid #eee; height: 100%; position: relative; }
+        
+        /* السلة قابلة للتمرير فقط */
+        .cart-items { flex: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 10px; padding: 5px; }
+        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
+        .cart-row span:first-child { color: #e74c3c; cursor: pointer; font-weight: 900; }
+
+        /* منطقة الحساب الثابتة (نفس تفاصيل الصورة) */
+        .cart-footer { 
+            background: #fffdf5; 
+            padding: 15px; 
+            border-radius: 25px; 
+            border: 2px solid #e0d5b5; 
+            flex-shrink: 0; /* تمنع القسم من التقلص */
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+
+        .summary-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e0d5b5; padding-bottom: 10px; }
+        .total-label { font-size: 32px; font-weight: 900; color: var(--maroon); line-height: 1; }
+        .tax-details { text-align: right; color: #777; font-size: 14px; font-weight: bold; }
+
+        /* توزيع الأزرار */
+        .payment-methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 5px 0; }
+        .method-btn { 
+            height: 65px; border-radius: 12px; border: 2px solid #ddd; background: white; 
+            cursor: pointer; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .method-btn.active { border-color: var(--maroon); color: var(--maroon); background: #fff; }
+        .method-btn.cash.active { background: var(--maroon); color: white; border-color: var(--maroon); }
+        .method-btn img { width: 20px; height: 20px; }
+
+        .btn-pay-final { 
+            width: 100%; background: var(--green); color: white; padding: 18px; border: none; 
+            border-radius: 20px; font-weight: 900; font-size: 24px; cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
 
         #mixedModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-body { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
@@ -55,7 +80,6 @@
             #receipt-print { display: block; position: absolute; left: 0; top: 0; width: 72mm; padding: 5px; direction: rtl; }
             .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; }
             .print-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
-            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -67,7 +91,7 @@
             <a href="inventory.html" class="nav-btn">📦 المخزن</a>
             <a href="sales.html" class="nav-btn">📊 السجل</a>
         </div>
-        <h2>🌿 شاهي وليف</h2>
+        <h2><span id="netStatus" class="status-dot online"></span> 🌿 شاهي وليف</h2>
         <div style="width:40px"></div>
     </header>
 
@@ -78,49 +102,41 @@
                 <button class="cat-btn" onclick="changeCategory('karak', this)">كرك</button>
                 <button class="cat-btn" onclick="changeCategory('bakery', this)">مخبوزات</button>
                 <button class="cat-btn" onclick="changeCategory('extras', this)">إضافات</button>
-                <button class="cat-btn" onclick="changeCategory('games', this)">ألعاب</button>
+                <button class="cat-btn" onclick="changeCategory('games', this)">طلبات جانبية</button>
             </div>
             <div id="itemsGrid" class="items-grid"></div>
         </div>
 
         <div class="cart-side">
-            <h3 style="margin-bottom:5px; color:var(--maroon); font-size: 15px;">🛒 الطلب الحالي</h3>
-            <input type="tel" id="customerPhone" placeholder="رقم الجوال (اختياري)" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; margin-bottom:5px; font-size: 12px;">
+            <input type="tel" id="customerPhone" placeholder="رقم الجوال (اختياري)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
             
-            <!-- السلة (الارتفاع 45% من مساحة الجهة اليسرى) -->
+            <!-- قائمة السلة القابلة للتمرير -->
             <div id="cartList" class="cart-items"></div>
             
+            <!-- قسم الدفع الثابت أسفل السلة -->
             <div class="cart-footer">
-                <div>
-                    <div class="total-line">
-                        <span>الإجمالي:</span>
-                        <span><span id="grandTotal">0.00</span> ﷼</span>
-                    </div>
-                    
-                    <!-- تفصيل الضريبة (الحسبة العكسية) -->
-                    <div class="tax-info">
-                        <div class="tax-line">
-                            <span>قبل الضريبة:</span>
-                            <span><span id="subTotal">0.00</span> ﷼</span>
-                        </div>
-                        <div class="tax-line">
-                            <span>ضريبة (15%):</span>
-                            <span><span id="taxAmount">0.00</span> ﷼</span>
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:10px;">
-                        <button class="method-btn active" onclick="setPayMethod('نقدي', this)">💵 كاش</button>
-                        <button class="method-btn" onclick="setPayMethod('شبكة', this)">💳 شبكة</button>
-                        <button class="method-btn" onclick="setPayMethod('مختلط', this)">🔄 مختلط</button>
+                <div class="summary-header">
+                    <div class="total-label"><span id="grandTotal">0.00</span> ريال</div>
+                    <div class="tax-details">
+                        <div style="font-size: 18px; color:black; margin-bottom:5px;">الإجمالي:</div>
+                        <div>قبل الضريبة: <span id="subTotal">0.00</span> ريال</div>
+                        <div>ضريبة (15%): <span id="taxAmount">0.00</span> ريال</div>
                     </div>
                 </div>
-                <button class="btn-pay" onclick="handlePayment()">إتمام و طباعة 🧾</button>
+
+                <div class="payment-methods">
+                    <button class="method-btn" onclick="setPayMethod('مختلط', this)">🔄 مختلط</button>
+                    <button class="method-btn" onclick="setPayMethod('شبكة', this)">💳 شبكة</button>
+                    <button class="method-btn active cash" onclick="setPayMethod('نقدي', this)">💵 كاش</button>
+                </div>
+
+                <button class="btn-pay-final" onclick="handlePayment()">
+                    <span>🧾</span> إتمام و طباعة
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة الدفع المختلط -->
     <div id="mixedModal" class="no-print">
         <div class="modal-body">
             <h3 style="color:var(--maroon);">دفع مختلط</h3>
@@ -129,7 +145,7 @@
                 <div>كاش: <b id="splitCash">0.00</b></div>
                 <div>شبكة: <b id="splitCard">0.00</b></div>
             </div>
-            <button class="btn-pay" onclick="confirmMixedPayment()">تأكيد العملية</button>
+            <button class="btn-pay-final" style="font-size: 18px; padding: 10px;" onclick="confirmMixedPayment()">تأكيد العملية</button>
             <button onclick="closeModal()" style="margin-top:10px; border:none; background:none; color:grey; cursor:pointer;">إلغاء</button>
         </div>
     </div>
@@ -143,10 +159,26 @@
 
         let allProducts = [], cart = [], payMethod = 'نقدي', currentCat = 'tea';
 
+        // مراقبة حالة الشبكة
+        function checkNet() {
+            const dot = document.getElementById('netStatus');
+            if(navigator.onLine) { dot.className = 'status-dot online'; syncOfflineSales(); } 
+            else { dot.className = 'status-dot offline'; }
+        }
+        window.addEventListener('online', checkNet);
+        window.addEventListener('offline', checkNet);
+
+        // تحميل المنتجات
+        const cached = localStorage.getItem('local_products');
+        if(cached) { allProducts = JSON.parse(cached); renderItems(); }
+
         db.ref('products').on('value', snap => {
             const data = snap.val();
-            allProducts = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
-            renderItems(); 
+            if(data) {
+                allProducts = Object.keys(data).map(k => ({id: k, ...data[k]}));
+                localStorage.setItem('local_products', JSON.stringify(allProducts));
+                renderItems(); 
+            }
         });
 
         function changeCategory(cat, btn) {
@@ -179,10 +211,8 @@
                 return `<div class="cart-row"><span onclick="removeItem(${idx})">✕</span><span>${item.name} (x${item.qty})</span><span>${(item.price * item.qty).toFixed(2)}</span></div>`;
             }).join('');
             
-            // الحسبة العكسية للضريبة 15%
             const subtotal = total / 1.15;
             const tax = total - subtotal;
-
             document.getElementById('grandTotal').innerText = total.toFixed(2);
             document.getElementById('subTotal').innerText = subtotal.toFixed(2);
             document.getElementById('taxAmount').innerText = tax.toFixed(2);
@@ -197,36 +227,36 @@
         }
 
         async function processOrder(method, details) {
-            const total = document.getElementById('grandTotal').innerText;
-            const tax = document.getElementById('taxAmount').innerText;
-            const subtotal = document.getElementById('subTotal').innerText;
-
             const order = {
-                items: cart.map(item => ({ name: item.name, q: item.qty, price: item.price, totalItem: (item.qty * item.price).toFixed(2) })),
-                total: total, tax: tax, subtotal: subtotal,
-                method: method, paymentDetails: details,
+                items: cart.map(i => ({ name: i.name, q: i.qty, price: i.price, totalItem: (i.qty * i.price).toFixed(2) })),
+                total: document.getElementById('grandTotal').innerText,
+                tax: document.getElementById('taxAmount').innerText,
+                subtotal: document.getElementById('subTotal').innerText,
+                method, paymentDetails: details,
                 phone: document.getElementById('customerPhone').value || "عميل محلي",
-                timestamp: firebase.database.ServerValue.TIMESTAMP
+                timestamp: Date.now()
             };
 
-            const updates = {};
-            cart.forEach(item => {
-                const p = allProducts.find(prod => prod.id === item.id);
-                if (p) updates[`/products/${item.id}/stock`] = (p.stock || 0) - item.qty;
-            });
+            let queue = JSON.parse(localStorage.getItem('shahi_offline_queue') || "[]");
+            queue.push(order);
+            localStorage.setItem('shahi_offline_queue', JSON.stringify(queue));
 
-            try {
-                await db.ref().update(updates);
-                await db.ref('sales').push(order);
-                order.timestamp = Date.now();
-                printReceipt(order);
-                cart = []; updateCart(); document.getElementById('customerPhone').value = "";
-            } catch (e) { alert("خطأ: " + e.message); }
+            if(navigator.onLine) syncOfflineSales();
+            printReceipt(order);
+            cart = []; updateCart(); document.getElementById('customerPhone').value = "";
+        }
+
+        async function syncOfflineSales() {
+            if(!navigator.onLine) return;
+            let queue = JSON.parse(localStorage.getItem('shahi_offline_queue') || "[]");
+            if(queue.length === 0) return;
+            for(const o of queue) { try { await db.ref('sales').push(o); } catch(e) { break; } }
+            localStorage.setItem('shahi_offline_queue', "[]");
         }
 
         function handlePayment() {
+            if (cart.length === 0) return;
             const total = parseFloat(document.getElementById('grandTotal').innerText);
-            if (total <= 0) return;
             if (payMethod === 'مختلط') {
                 document.getElementById('cashInput').value = "";
                 document.getElementById('mixedModal').style.display = 'flex';
@@ -254,15 +284,15 @@
 
         function printReceipt(order) {
             const printDiv = document.getElementById('receipt-print');
-            const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.q}</td><td align="left">${parseFloat(i.totalItem).toFixed(2)}</td></tr>`).join('');
+            const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.q}</td><td align="left">${i.totalItem}</td></tr>`).join('');
             printDiv.innerHTML = `
                 <div class="receipt-header"><h3>🌿 شاهي وليف</h3><p>فاتورة ضريبية مبسطة</p></div>
                 <p style="font-size:10px;">التاريخ: ${new Date(order.timestamp).toLocaleString('ar-SA')}</p>
                 <table class="print-table"><tbody>${itemsHtml}</tbody></table>
                 <div style="border-top:1px dashed #000; padding-top:5px; font-size:12px;">
-                    <div style="display:flex; justify-content:space-between;"><span>المجموع غير شامل الضريبة:</span><span>${order.subtotal}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>ضريبة القيمة المضافة 15%:</span><span>${order.tax}</span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:5px;"><span>الإجمالي النهائي:</span><span>${order.total} ﷼</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>قبل الضريبة:</span><span>${order.subtotal}</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>الضريبة 15%:</span><span>${order.tax}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>الإجمالي:</span><span>${order.total} ريال</span></div>
                 </div>
                 <div style="text-align:center; margin-top:15px; font-size:10px;">شكراً لزيارتكم</div>
             `;
