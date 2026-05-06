@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف</title>
+    <title>كاشير شاهي وليف - المطور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -34,13 +34,11 @@
         .method-btn { padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #fff; cursor: pointer; font-weight: bold; }
         .method-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
 
-        /* Modal المختلط */
         #mixedModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-body { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
         .modal-body input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 20px; text-align: center; }
         .split-info { display: flex; justify-content: space-around; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; }
 
-        /* Print Settings */
         #receipt-print { display: none; }
         @media print {
             body * { visibility: hidden; }
@@ -92,7 +90,6 @@
         </div>
     </div>
 
-    <!-- نافذة الدفع المختلط -->
     <div id="mixedModal" class="no-print">
         <div class="modal-body">
             <h3 style="color:var(--maroon);">دفع مختلط</h3>
@@ -163,7 +160,6 @@
             btn.classList.add('active');
         }
 
-        // معالجة الدفع
         function handlePayment() {
             const total = parseFloat(document.getElementById('grandTotal').innerText);
             if (total <= 0) return;
@@ -192,57 +188,74 @@
             const cash = parseFloat(document.getElementById('splitCash').innerText);
             const card = parseFloat(document.getElementById('splitCard').innerText);
             const total = parseFloat(document.getElementById('modalTotal').innerText);
-            
             if (cash > total) return alert("المبلغ النقدي أكبر من الإجمالي!");
-            
             processOrder('مختلط', {cash: cash, card: card});
             closeModal();
         }
 
         function closeModal() { document.getElementById('mixedModal').style.display = 'none'; }
 
+        // الدالة المدمجة والمطورة للإرسال إلى السجل والمخزن
         async function processOrder(method, details) {
             const total = document.getElementById('grandTotal').innerText;
+            
+            // 1. تجهيز بيانات الطلب للسجل
             const order = {
-                items: JSON.parse(JSON.stringify(cart)),
+                items: cart.map(item => ({
+                    name: item.name,
+                    q: item.qty,       // الكمية للتقارير
+                    price: item.price, // سعر الحبة للتقارير
+                    totalItem: (item.qty * item.price).toFixed(2)
+                })),
                 total: total,
                 method: method,
                 paymentDetails: details,
-                customerPhone: document.getElementById('customerPhone').value || "عميل محلي",
+                phone: document.getElementById('customerPhone').value || "عميل محلي",
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             };
 
+            // 2. تجهيز تحديثات المخزن
             const updates = {};
             cart.forEach(item => {
                 const p = allProducts.find(prod => prod.id === item.id);
-                if (p) updates[`/products/${item.id}/stock`] = (p.stock || 0) - item.qty;
+                if (p) {
+                    updates[`/products/${item.id}/stock`] = (p.stock || 0) - item.qty;
+                }
             });
 
             try {
+                // إرسال البيانات (المخزن + المبيعات)
                 await db.ref().update(updates);
                 await db.ref('sales').push(order);
+                
+                // الطباعة
                 order.timestamp = Date.now();
                 printReceipt(order);
+                
+                // تصفير الواجهة
                 cart = [];
                 updateCart();
                 document.getElementById('customerPhone').value = "";
-            } catch (e) { alert("خطأ: " + e.message); }
+                console.log("تم ترحيل البيانات بنجاح إلى السجل والمخزن ✅");
+            } catch (e) { 
+                alert("خطأ في الربط: " + e.message); 
+            }
         }
 
         function printReceipt(order) {
             const printDiv = document.getElementById('receipt-print');
-            const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.qty}</td><td align="left">${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');
+            const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.q}</td><td align="left">${parseFloat(i.totalItem).toFixed(2)}</td></tr>`).join('');
             
             printDiv.innerHTML = `
                 <div class="receipt-header"><h3>🌿 شاهي وليف</h3><p>الوجة</p></div>
                 <p style="font-size:11px;">التاريخ: ${new Date(order.timestamp).toLocaleString('ar-SA')}</p>
                 <table class="print-table"><tbody>${itemsHtml}</tbody></table>
                 <div style="border-top:1px dashed #000; padding-top:5px; font-weight:bold;">الإجمالي: ${order.total} ﷼</div>
-                <div style="font-size:11px; margin-top:5px;">طريقة الدفع: ${order.method} (كاش: ${order.paymentDetails.cash.toFixed(2)} / شبكة: ${order.paymentDetails.card.toFixed(2)})</div>
+                <div style="font-size:10px; margin-top:5px;">الدفع: ${order.method}</div>
                 <div style="text-align:center; margin-top:15px; font-size:10px;">شكراً لزيارتكم</div>
             `;
             setTimeout(() => { window.print(); }, 500);
         }
     </script>
 </body>
-</html></html>
+</html>
