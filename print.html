@@ -2,73 +2,92 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>محرك طباعة شاهي وليف</title>
+    <title>محرك طباعة شاهي وليف - المطور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body { font-family: 'Arial', sans-serif; width: 72mm; margin: 0; padding: 5px; }
+        /* إعدادات الورق الحراري 72mm */
+        body { font-family: 'Arial', sans-serif; width: 72mm; margin: 0; padding: 5px; background: #eee; }
+        #printArea { background: white; padding: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        
         .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; }
         .receipt-title { font-size: 22px; font-weight: bold; margin: 5px 0; }
-        .info-row { display: flex; justify-content: space-between; font-size: 14px; margin: 5px 0; }
+        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin: 5px 0; }
+        
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th { border-bottom: 1px solid #000; text-align: right; font-size: 14px; }
-        td { padding: 5px 0; font-size: 14px; }
-        .total-section { border-top: 2px dashed #000; padding-top: 10px; }
+        th { border-bottom: 1px solid #000; text-align: right; font-size: 13px; padding-bottom: 5px; }
+        td { padding: 5px 0; font-size: 13px; vertical-align: top; }
+        
+        .total-section { border-top: 2px dashed #000; padding-top: 10px; margin-top: 10px; }
         .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
-        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; border-top: 1px solid #eee; padding-top: 10px; }
 
         /* لوحة التحكم - تظهر في الشاشة فقط */
         #editorPanel { 
-            background: #f0f0f0; padding: 15px; border: 1px solid #ccc; 
-            margin-bottom: 20px; border-radius: 8px; width: 300px;
+            background: #fff; padding: 15px; border: 1px solid #ccc; 
+            margin-bottom: 20px; border-radius: 8px; width: 320px;
+            position: fixed; left: 10px; top: 10px; z-index: 1000;
         }
         #editorPanel input, #editorPanel textarea { 
-            width: 100%; margin-bottom: 10px; padding: 5px; border: 1px solid #ddd;
+            width: 95%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;
         }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         
         @media print {
             .no-print { display: none !important; }
-            body { width: 72mm; }
+            body { width: 72mm; padding: 0; background: white; }
+            #printArea { box-shadow: none; width: 72mm; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-<!-- لوحة التحكم (مخفية عند الطباعة) -->
 <div id="editorPanel" class="no-print">
-    <h4 style="margin:0 0 10px 0;">⚙️ إعدادات الفاتورة</h4>
+    <h4 style="margin:0 0 10px 0; color: #630000;">⚙️ إعدادات الفاتورة</h4>
     <label>اسم المحل:</label>
     <input type="text" id="editTitle" oninput="updateLive()" value="🍃 شاهي وليف">
     <label>نص الترويسة:</label>
-    <textarea id="editHeader" oninput="updateLive()">الرقم الضريبي: 1234567890&#10;فرع: الوجة</textarea>
+    <textarea id="editHeader" oninput="updateLive()" rows="2">الرقم الضريبي: 1234567890&#10;فرع: الوجة</textarea>
     <label>نص الخاتمة:</label>
-    <textarea id="editFooter" oninput="updateLive()">شكراً لزيارتكم! نتشرف بتقديم أفضل شاهي ومخبوزات لكم 🍃</textarea>
-    <button onclick="saveSettings()" style="width:100%; background:green; color:white; border:none; padding:8px; cursor:pointer;">حفظ الإعدادات 💾</button>
+    <textarea id="editFooter" oninput="updateLive()" rows="2">شكراً لزيارتكم! نتشرف بتقديم أفضل شاهي ومخبوزات لكم 🍃</textarea>
+    
+    <button onclick="saveSettings()" class="btn" style="background: #2e7d32; color: white;">حفظ الإعدادات 💾</button>
+    <button onclick="window.print()" class="btn" style="background: #444; color: white;">طباعة المعاينة الحالية 🖨️</button>
+    <hr style="margin: 10px 0;">
+    <p style="font-size: 11px; color: #666;">* ستقوم هذه الصفحة بالطباعة تلقائياً عند تسجيل أي طلب جديد في الكاشير.</p>
 </div>
 
 <div id="printArea">
     <div class="receipt-header">
         <div class="receipt-title" id="dispTitle">🍃 شاهي وليف</div>
-        <div id="dispHeader" style="white-space: pre-line; font-size: 12px;"></div>
+        <div id="dispHeader" style="white-space: pre-line; font-size: 11px;"></div>
     </div>
 
-    <div id="orderInfo"></div>
+    <div id="orderInfo" style="margin-top: 10px;"></div>
 
     <table>
         <thead>
-            <tr><th>الصنف</th><th>السعر</th></tr>
+            <tr>
+                <th>الصنف</th>
+                <th style="text-align: center;">الكمية</th>
+                <th style="text-align: left;">المجموع</th>
+            </tr>
         </thead>
         <tbody id="itemsList"></tbody>
     </table>
 
     <div class="total-section">
-        <div class="total-row"><span>الإجمالي:</span><span id="grandTotal">0.00</span></div>
-        <div id="paymentDetails" style="font-size: 13px; margin-top: 5px;"></div>
+        <div class="total-row">
+            <span>الإجمالي:</span>
+            <span id="grandTotal">0.00 ﷼</span>
+        </div>
+        <div id="paymentDetails" style="font-size: 12px; margin-top: 8px; color: #444;"></div>
     </div>
 
     <div class="footer">
         <div id="dispFooter" style="white-space: pre-line;"></div>
-        <div style="height: 60px;"></div> <!-- لضمان خروج الورق للقص -->
+        <div style="margin-top: 10px; font-weight: bold; font-size: 10px;">نظام شاهي وليف السحابي</div>
+        <div style="height: 50px;"></div> <!-- مساحة لقص الورق -->
     </div>
 </div>
 
@@ -77,7 +96,6 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // تحميل الإعدادات المحفوظة
     function loadSettings() {
         const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
             title: "🍃 شاهي وليف",
@@ -103,36 +121,52 @@
             footer: document.getElementById('editFooter').value
         };
         localStorage.setItem('receiptSettings', JSON.stringify(settings));
-        alert("تم حفظ التعديلات بنجاح! ✅");
+        alert("تم حفظ التعديلات! ✅");
     }
 
-    // استقبال الطلبات من الفايربيس
+    // الاستماع لآخر طلب مضاف في Firebase (متوافق مع نظام الكاشير المطور)
     db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
         const order = snapshot.val();
+        // منع الطباعة التلقائية عند أول تحميل للصفحة (اختياري)
+        // إذا أردت الطباعة فوراً، اترك السطر التالي كما هو
         renderReceipt(order);
     });
 
     function renderReceipt(order) {
+        // تحويل التوقيت
+        const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
+        
         document.getElementById('orderInfo').innerHTML = `
-            <div class="info-row"><span>التاريخ:</span> <span>${order.date}</span></div>
-            <div class="info-row"><span>العميل:</span> <span>${order.customer}</span></div>
-            <div class="info-row"><span>طريقة الدفع:</span> <span>${order.method.split('(')[0]}</span></div>
+            <div class="info-row"><span>التاريخ:</span> <span>${orderDate}</span></div>
+            <div class="info-row"><span>رقم العميل:</span> <span>${order.phone || 'عميل محلي'}</span></div>
+            <div class="info-row"><span>طريقة الدفع:</span> <span>${order.method || 'نقدي'}</span></div>
         `;
 
+        // بناء قائمة الأصناف (متوافق مع q و totalItem)
         document.getElementById('itemsList').innerHTML = order.items.map(item => `
-            <tr><td>${item.name}</td><td>${item.price.toFixed(2)} ﷼</td></tr>
+            <tr>
+                <td>${item.name}</td>
+                <td style="text-align: center;">${item.q}</td>
+                <td style="text-align: left;">${parseFloat(item.totalItem || (item.price * item.q)).toFixed(2)}</td>
+            </tr>
         `).join('');
 
-        document.getElementById('grandTotal').innerText = order.amount.toFixed(2) + " ﷼";
+        document.getElementById('grandTotal').innerText = parseFloat(order.total).toFixed(2) + " ﷼";
         
+        // تفاصيل الدفع المختلط
         if (order.paymentDetails) {
-            document.getElementById('paymentDetails').innerHTML = `
-                <div>• نقدي: ${order.paymentDetails.cash.toFixed(2)} ﷼</div>
-                <div>• شبكة: ${order.paymentDetails.card.toFixed(2)} ﷼</div>
-            `;
+            let detailsHtml = "";
+            if(order.paymentDetails.cash > 0) detailsHtml += `<div>• نقدي: ${parseFloat(order.paymentDetails.cash).toFixed(2)} ﷼</div>`;
+            if(order.paymentDetails.card > 0) detailsHtml += `<div>• شبكة: ${parseFloat(order.paymentDetails.card).toFixed(2)} ﷼</div>`;
+            document.getElementById('paymentDetails').innerHTML = detailsHtml;
+        } else {
+            document.getElementById('paymentDetails').innerHTML = "";
         }
 
-        setTimeout(() => { window.print(); }, 500);
+        // إرسال أمر الطباعة للمتصفح
+        setTimeout(() => { 
+            window.print(); 
+        }, 800);
     }
 
     window.onload = loadSettings;
