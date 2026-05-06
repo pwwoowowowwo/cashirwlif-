@@ -3,36 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقارير شاهي وليف</title>
+    <title>تقارير شاهي وليف الشاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #5a0000; --gold: #d4af37; --bg: #f4f4f2; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 20px; margin: 0; direction: rtl; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
+        /* الهيدر والتبويبات */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 13px; }
-        .btn-main { background: var(--maroon); color: white; }
-        .btn-print { background: #444; color: white; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .tab-btn { background: none; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; color: #666; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab-btn { padding: 12px 25px; border: none; background: none; cursor: pointer; font-weight: bold; color: #666; transition: 0.3s; }
         .tab-btn.active { color: var(--maroon); border-bottom: 3px solid var(--maroon); }
 
+        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 13px; }
+        .btn-main { background: var(--maroon); color: white; }
+        .btn-reprint { background: #444; color: white; }
+
+        /* الجداول */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; padding: 12px; text-align: right; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .item-row { background: #fffcf5; padding: 4px 8px; border-radius: 4px; margin-bottom: 3px; border-right: 3px solid var(--gold); font-size: 12px; }
         .section { display: none; }
         .section.active { display: block; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th { background: #f8f9fa; padding: 12px; text-align: right; border-bottom: 2px solid #eee; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-
-        /* ستايل الفاتورة الحرارية المخفية */
-        #thermal-receipt { display: none; width: 80mm; padding: 10px; font-family: monospace; }
+        /* ستايل الطباعة الحرارية (مخفي في الصفحة) */
+        #thermal-receipt { display: none; width: 80mm; padding: 10px; font-family: 'Courier New', Courier, monospace; color: black; }
+        
         @media print {
             body * { visibility: hidden; }
             #thermal-receipt, #thermal-receipt * { visibility: visible; }
             #thermal-receipt { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
@@ -40,48 +45,51 @@
 
 <div class="container">
     <div class="header no-print">
-        <h2 style="margin:0; color:var(--maroon);">📊 نظام التقارير والفواتير</h2>
-        <a href="index.html" class="btn btn-main">⬅ الرئيسية</a>
+        <h2 style="margin:0; color:var(--maroon);">📊 سجل المبيعات والتقارير</h2>
+        <a href="pos.html" class="btn btn-main">⬅ العودة للكاشير</a>
     </div>
 
     <div class="tabs no-print">
-        <button class="tab-btn active" onclick="showTab('sales-tab', this)">سجل العمليات</button>
-        <button class="tab-btn" onclick="showTab('monthly-tab', this)">تقرير الأصناف الشهري</button>
+        <button class="tab-btn active" onclick="showTab('daily-tab', this)">سجل العمليات اليومي</button>
+        <button class="tab-btn" onclick="showTab('report-tab', this)">تقرير جرد المبيعات</button>
     </div>
 
-    <!-- قسم سجل العمليات -->
-    <div id="sales-tab" class="section active">
+    <!-- تبويب سجل العمليات -->
+    <div id="daily-tab" class="section active">
         <table>
             <thead>
                 <tr>
                     <th>الوقت</th>
+                    <th>العميل</th>
                     <th>الأصناف</th>
                     <th>الإجمالي</th>
                     <th>الإجراء</th>
                 </tr>
             </thead>
-            <tbody id="salesTable"></tbody>
+            <tbody id="salesTable">
+                <tr><td colspan="5" style="text-align:center; padding:30px;">جاري جلب البيانات...</td></tr>
+            </tbody>
         </table>
     </div>
 
-    <!-- قسم التقرير الشهري -->
-    <div id="monthly-tab" class="section">
-        <h3 id="monthTitle">تقرير شهر: </h3>
+    <!-- تبويب تقرير الكميات -->
+    <div id="report-tab" class="section">
+        <h3 style="color:var(--maroon); margin-bottom:15px;">تقرير إجمالي مبيعات الأصناف (الشهر الحالي)</h3>
         <table>
             <thead>
                 <tr>
                     <th>اسم الصنف</th>
                     <th>الكمية المباعة</th>
-                    <th>سعر الحبة (متوسط)</th>
-                    <th>إجمالي المبيعات</th>
+                    <th>سعر الحبة</th>
+                    <th>إجمالي مبيعات الصنف</th>
                 </tr>
             </thead>
-            <tbody id="monthlyTable"></tbody>
+            <tbody id="reportTable"></tbody>
         </table>
     </div>
 </div>
 
-<!-- قالب الفاتورة الحرارية المخفي -->
+<!-- قالب الفاتورة الحرارية -->
 <div id="thermal-receipt"></div>
 
 <script>
@@ -89,18 +97,9 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let allSalesData = [];
+    let allSales = [];
 
-    // جلب البيانات
-    db.ref('sales').on('value', snap => {
-        const data = snap.val();
-        if (!data) return;
-        allSalesData = Object.keys(data).map(id => ({ id, ...data[id] }));
-        renderSales();
-        renderMonthlyReport();
-    });
-
-    // تبديل التبويبات
+    // التبديل بين التبويبات
     function showTab(id, btn) {
         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -108,79 +107,97 @@
         btn.classList.add('active');
     }
 
-    // عرض سجل المبيعات
-    function renderSales() {
-        const tbody = document.getElementById('salesTable');
-        const sorted = [...allSalesData].sort((a,b) => b.timestamp - a.timestamp);
+    // استدعاء البيانات
+    db.ref('sales').on('value', snap => {
+        const data = snap.val();
+        if (!data) return;
         
-        tbody.innerHTML = sorted.map(s => `
-            <tr>
-                <td>${new Date(s.timestamp).toLocaleString('ar-SA')}</td>
-                <td style="font-size:12px">${s.items.map(i => i.name).join('، ')}</td>
-                <td><b>${parseFloat(s.total).toFixed(2)} ﷼</b></td>
-                <td><button class="btn btn-print" onclick="reprintReceipt('${s.id}')">🖨️ إعادة طباعة</button></td>
-            </tr>
-        `).join('');
+        allSales = Object.keys(data).map(id => ({ id, ...data[id] }));
+        allSales.sort((a, b) => b.timestamp - a.timestamp); // الأحدث أولاً
+        
+        renderDailySales();
+        renderInventoryReport();
+    });
+
+    // عرض سجل المبيعات
+    function renderDailySales() {
+        const tbody = document.getElementById('salesTable');
+        tbody.innerHTML = allSales.map(s => {
+            const date = new Date(s.timestamp).toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+            const itemsHtml = s.items ? s.items.map(i => `<div class="item-row">${i.name} (x${i.q})</div>`).join('') : '---';
+            
+            return `
+                <tr>
+                    <td>${date}</td>
+                    <td><small>${s.phone || 'عميل محلي'}</small></td>
+                    <td>${itemsHtml}</td>
+                    <td style="font-weight:bold;">${parseFloat(s.total).toFixed(2)} ﷼</td>
+                    <td><button class="btn btn-reprint" onclick="reprint('${s.id}')">🖨️ إعادة طباعة</button></td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    // عرض التقرير الشهري للأصناف
-    function renderMonthlyReport() {
+    // عرض تقرير جرد الكميات
+    function renderInventoryReport() {
+        const reportTable = document.getElementById('reportTable');
+        const summary = {};
         const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        document.getElementById('monthTitle').innerText = `تقرير شهر: ${currentMonth + 1} / ${currentYear}`;
 
-        const itemSummary = {};
-
-        allSalesData.forEach(sale => {
+        allSales.forEach(sale => {
             const saleDate = new Date(sale.timestamp);
-            if(saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear) {
+            if(saleDate.getMonth() === currentMonth) {
                 sale.items.forEach(item => {
-                    if(!itemSummary[item.name]) {
-                        itemSummary[item.name] = { qty: 0, total: 0, price: item.price };
+                    if(!summary[item.name]) {
+                        summary[item.name] = { qty: 0, price: item.price, total: 0 };
                     }
-                    itemSummary[item.name].qty += parseInt(item.q);
-                    itemSummary[item.name].total += (item.price * item.q);
+                    summary[item.name].qty += parseInt(item.q);
+                    summary[item.name].total += (item.price * item.q);
                 });
             }
         });
 
-        const tbody = document.getElementById('monthlyTable');
-        tbody.innerHTML = Object.keys(itemSummary).map(name => `
+        reportTable.innerHTML = Object.keys(summary).map(name => `
             <tr>
-                <td>${name}</td>
-                <td>${itemSummary[name].qty}</td>
-                <td>${parseFloat(itemSummary[name].price).toFixed(2)} ﷼</td>
-                <td><b>${itemSummary[name].total.toFixed(2)} ﷼</b></td>
+                <td><b>${name}</b></td>
+                <td>${summary[name].qty}</td>
+                <td>${parseFloat(summary[name].price).toFixed(2)} ﷼</td>
+                <td style="font-weight:bold; color:var(--maroon);">${summary[name].total.toFixed(2)} ﷼</td>
             </tr>
         `).join('');
     }
 
-    // وظيفة إعادة الطباعة
-    function reprintReceipt(saleId) {
-        const sale = allSalesData.find(s => s.id === saleId);
-        if(!sale) return;
+    // وظيفة إعادة الطباعة (فاتورة حرارية)
+    function reprint(orderId) {
+        const order = allSales.find(o => o.id === orderId);
+        if(!order) return;
 
-        const receiptDiv = document.getElementById('thermal-receipt');
-        const itemsHtml = sale.items.map(i => `
-            <div style="display:flex; justify-content:space-between;">
+        const receipt = document.getElementById('thermal-receipt');
+        const itemsHtml = order.items.map(i => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
                 <span>${i.name} x${i.q}</span>
                 <span>${(i.price * i.q).toFixed(2)}</span>
             </div>
         `).join('');
 
-        receiptDiv.innerHTML = `
-            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px;">
-                <h3 style="margin:5px;">شاهي وليف</h3>
-                <small>${new Date(sale.timestamp).toLocaleString('ar-SA')}</small>
+        receipt.innerHTML = `
+            <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px;">
+                <h2 style="margin:5px;">🌿 شاهي وليف</h2>
+                <p style="font-size:12px;">فاتورة إعادة طباعة</p>
+                <small>${new Date(order.timestamp).toLocaleString('ar-SA')}</small>
             </div>
-            <div style="padding: 10px 0; border-bottom:1px dashed #000;">
+            <div style="border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px;">
                 ${itemsHtml}
             </div>
-            <div style="display:flex; justify-content:space-between; font-weight:bold; padding-top:10px;">
-                <span>الإجمالي (شامل الضريبة):</span>
-                <span>${parseFloat(sale.total).toFixed(2)} ﷼</span>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;">
+                <span>الإجمالي:</span>
+                <span>${parseFloat(order.total).toFixed(2)} ﷼</span>
             </div>
-            <div style="text-align:center; margin-top:20px;">
+            <div style="margin-top:10px; font-size:12px;">
+                طريقة الدفع: ${order.method} <br>
+                العميل: ${order.phone || '---'}
+            </div>
+            <div style="text-align:center; margin-top:20px; border-top:1px solid #eee; padding-top:10px;">
                 <small>شكراً لزيارتكم</small>
             </div>
         `;
