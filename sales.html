@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سجل مبيعات شاهي وليف - نسخة التابلت</title>
+    <title>سجل مبيعات شاهي وليف - المطور</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -38,7 +38,7 @@
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* إحصائيات سريعة في صفحة السجل */
+        /* إحصائيات سريعة */
         .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
         .m-card { background: #fffcf5; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); text-align: center; }
         .m-card span { font-size: 14px; color: #777; font-weight: bold; }
@@ -56,7 +56,7 @@
 
 <div class="container no-print">
     <div class="header">
-        <h2>📊 السجل والتقارير الذكية</h2>
+        <h2>📊 السجل والتقارير</h2>
         <a href="index.html" class="btn-back">🏠 العودة للرئيسية</a>
     </div>
 
@@ -80,7 +80,6 @@
         <button class="tab-btn" onclick="showTab('inventory-report', this)">📦 جرد الأصناف</button>
     </div>
 
-    <!-- سجل الفواتير -->
     <div id="sales-list" class="section active">
         <div class="table-container">
             <table>
@@ -100,7 +99,6 @@
         </div>
     </div>
 
-    <!-- جرد الأصناف -->
     <div id="inventory-report" class="section">
         <div class="table-container">
             <table>
@@ -134,7 +132,6 @@
         btn.classList.add('active');
     }
 
-    // جلب البيانات مع فلترة ذكية
     db.ref('sales').on('value', snap => {
         const data = snap.val();
         if (!data) {
@@ -143,7 +140,7 @@
         }
         
         allSales = Object.keys(data).map(id => ({ id, ...data[id] }));
-        allSales.sort((a, b) => b.timestamp - a.timestamp); // الأحدث فوق
+        allSales.sort((a, b) => b.timestamp - a.timestamp); 
         
         renderSales();
         renderInventory();
@@ -151,24 +148,25 @@
     });
 
     function updateQuickStats() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
         let todayTotal = 0;
         let todayCount = 0;
         const itemCounts = {};
 
         allSales.forEach(s => {
-            if(s.date === today) {
-                todayTotal += parseFloat(s.amount || s.total);
+            const sDate = s.timestamp ? new Date(s.timestamp).toLocaleDateString('en-CA') : s.date;
+            if(sDate === today) {
+                todayTotal += parseFloat(s.amount || s.total || 0);
                 todayCount++;
                 if(s.items) {
                     s.items.forEach(i => {
-                        itemCounts[i.name] = (itemCounts[i.name] || 0) + parseInt(i.qty || i.q);
+                        itemCounts[i.name] = (itemCounts[i.name] || 0) + parseInt(i.qty || i.q || 0);
                     });
                 }
             }
         });
 
-        document.getElementById('statTodaySales').innerText = todayTotal.toLocaleString('en-US', {minimumFractionDigits:2}) + " ﷼";
+        document.getElementById('statTodaySales').innerText = todayTotal.toFixed(2) + " ﷼";
         document.getElementById('statTodayCount').innerText = todayCount;
         
         const topItem = Object.keys(itemCounts).reduce((a, b) => itemCounts[a] > itemCounts[b] ? a : b, "---");
@@ -177,15 +175,25 @@
 
     function renderSales() {
         const tbody = document.getElementById('salesTableBody');
-        tbody.innerHTML = allSales.map(s => `
-            <tr>
-                <td><b>${s.time || ''}</b> <br> <small>${s.date || ''}</small></td>
-                <td>${s.phone || 'عميل محلي'}</td>
-                <td><span style="background:#eee; padding:4px 8px; border-radius:5px; font-size:12px;">${s.method || 'نقدي'}</span></td>
-                <td style="font-weight:900; color:var(--maroon);">${parseFloat(s.amount || s.total).toFixed(2)} ﷼</td>
-                <td><button class="btn-reprint" onclick="reprint('${s.id}')">🖨️ طباعة</button></td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = allSales.map(s => {
+            // معالجة الوقت والتاريخ من الـ Timestamp
+            const dateObj = s.timestamp ? new Date(s.timestamp) : new Date();
+            const timeStr = dateObj.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const dateStr = dateObj.toLocaleDateString('ar-SA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            return `
+                <tr>
+                    <td>
+                        <div style="font-weight:bold; color:var(--maroon);">${timeStr}</div>
+                        <div style="font-size:12px; color:#666;">${dateStr}</div>
+                    </td>
+                    <td>${s.phone || 'عميل محلي'}</td>
+                    <td><span style="background:#eee; padding:4px 8px; border-radius:5px; font-size:12px;">${s.method || 'نقدي'}</span></td>
+                    <td style="font-weight:900; color:var(--maroon);">${parseFloat(s.amount || s.total || 0).toFixed(2)} ﷼</td>
+                    <td><button class="btn-reprint" onclick="reprint('${s.id}')">🖨️ إعادة طباعة</button></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function renderInventory() {
@@ -196,7 +204,7 @@
             if(sale.items) {
                 sale.items.forEach(item => {
                     if(!summary[item.name]) summary[item.name] = { qty: 0, price: item.price, total: 0 };
-                    const q = parseInt(item.qty || item.q);
+                    const q = parseInt(item.qty || item.q || 0);
                     summary[item.name].qty += q;
                     summary[item.name].total += (item.price * q);
                 });
@@ -217,32 +225,40 @@
         const order = allSales.find(o => o.id === orderId);
         if(!order) return;
 
+        const dateObj = order.timestamp ? new Date(order.timestamp) : new Date();
+        const fullDateStr = dateObj.toLocaleString('ar-SA');
+
         const printArea = document.getElementById('thermal-print-area');
         const itemsHtml = order.items.map(i => `
             <tr>
-                <td>${i.name} x${i.qty || i.q}</td>
-                <td align="left">${( (i.qty||i.q) * i.price).toFixed(2)}</td>
+                <td style="padding:4px 0;">${i.name} x${i.qty || i.q}</td>
+                <td style="text-align:left;">${((i.qty||i.q) * i.price).toFixed(2)}</td>
             </tr>
         `).join('');
 
         printArea.innerHTML = `
             <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px;">
-                <h2 style="margin:0">شاهي وليف 🍃</h2>
-                <p style="font-size:12px">فاتورة ضريبية مبسطة (نسخة)</p>
-                <p style="font-size:10px">${order.date} | ${order.time}</p>
+                <h2 style="margin:5px 0;">🍃 شاهي وليف</h2>
+                <div style="font-size:12px;">فاتورة ضريبية مبسطة (نسخة)</div>
+                <div style="font-size:10px;">المدينة المنورة - حي ورقان</div>
+                <div style="font-size:11px; margin-top:5px;">${fullDateStr}</div>
             </div>
-            <table style="width:100%; font-size:13px; margin:10px 0;">
+            
+            <table style="width:100%; font-size:13px; margin:10px 0; border-collapse: collapse;">
                 ${itemsHtml}
             </table>
+
             <div style="border-top:1px dashed #000; padding-top:5px; font-weight:bold; font-size:16px; display:flex; justify-content:space-between;">
                 <span>الإجمالي:</span>
-                <span>${parseFloat(order.amount || order.total).toFixed(2)} ريال</span>
+                <span>${parseFloat(order.amount || order.total || 0).toFixed(2)} ﷼</span>
             </div>
-            <div style="text-align:center; margin-top:20px; font-size:10px;">نتشرف بخدمتكم دائماً</div>
+
+            <div style="text-align:center; margin-top:15px; font-size:11px;">
+                شكراً لزيارتكم 🍃
+            </div>
         `;
         window.print();
     }
 </script>
 </body>
-</html>
 </html>
