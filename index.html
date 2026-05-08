@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="شاهي وليف">
 
-    <title>لوحة تحكم شاهي وليف - النسخة الكاملة</title>
+    <title>لوحة تحكم شاهي وليف - النسخة الشاملة</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -45,10 +45,10 @@
 
         .main-container { width: 100%; max-width: 1100px; }
         
-        /* شبكة الأقسام الثمانية */
+        /* شبكة الأقسام */
         .sections-grid { 
             display: grid; 
-            grid-template-columns: repeat(4, 1fr); /* 4 أعمدة للتابلت */
+            grid-template-columns: repeat(4, 1fr); 
             gap: 15px; 
             width: 100%; 
         }
@@ -64,20 +64,18 @@
         
         .icon-circle { width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
 
-        /* ألوان الأيقونات */
         .cashier .icon-circle { background: #fff4e5; color: var(--orange); }
         .sales-link .icon-circle { background: #e8faf0; color: var(--green); }
         .purchases-link .icon-circle { background: #e3f2fd; color: var(--blue); }
         .expenses-link .icon-circle { background: #fdf2f2; color: var(--red); }
         .monthly-link .icon-circle { background: #e8f8f5; color: var(--teal); }
-        .inventory-link .icon-circle { background: #f0f3f4; color: #34495e; } /* المستودع */
+        .inventory-link .icon-circle { background: #f0f3f4; color: #34495e; }
         .staff .icon-circle { background: #f5eef8; color: var(--purple); }
         .reports-link .icon-circle { background: #fffde7; color: #f1c40f; }
 
         .footer-tag { margin-top: 30px; text-align: center; color: #95a5a6; font-size: 14px; }
         .footer-tag b { color: var(--maroon); }
 
-        /* للموبايل */
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .sections-grid { grid-template-columns: repeat(2, 1fr); }
@@ -144,16 +142,36 @@
     const db = firebase.database();
 
     function syncDashboard() {
-        const today = new Date().toISOString().split('T')[0]; 
+        // الحصول على تاريخ اليوم بتنسيق YYYY-MM-DD
+        const todayStr = new Date().toISOString().split('T')[0]; 
         const paths = ['sales', 'purchases', 'expenses'];
+
         paths.forEach(path => {
             db.ref(path).on('value', snap => {
                 let total = 0;
                 snap.forEach(child => {
-                    if(child.val().date === today) total += parseFloat(child.val().amount || child.val().total || 0);
+                    const data = child.val();
+                    let isToday = false;
+
+                    // التحقق من التاريخ النصي (مثل المصاريف)
+                    if (data.date && data.date === todayStr) {
+                        isToday = true;
+                    } 
+                    // التحقق من التوقيت الرقمي (مثل الكاشير عندك)
+                    else if (data.timestamp) {
+                        const d = new Date(data.timestamp).toISOString().split('T')[0];
+                        if (d === todayStr) isToday = true;
+                    }
+
+                    if (isToday) {
+                        // جمع القيمة المالية بأي مسمى موجود (amount أو total)
+                        total += parseFloat(data.amount || data.total || 0);
+                    }
                 });
+
                 const id = 'today' + path.charAt(0).toUpperCase() + path.slice(1);
-                document.getElementById(id).innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+                const el = document.getElementById(id);
+                if (el) el.innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
                 updateProfit();
             });
         });
@@ -163,6 +181,7 @@
         const s = parseFloat(document.getElementById('todaySales').innerText.replace(/,/g, '')) || 0;
         const p = parseFloat(document.getElementById('todayPurchases').innerText.replace(/,/g, '')) || 0;
         const e = parseFloat(document.getElementById('todayExpenses').innerText.replace(/,/g, '')) || 0;
+        
         const net = s - (p + e);
         document.getElementById('netProfit').innerText = net.toLocaleString('en-US', {minimumFractionDigits: 2});
         
