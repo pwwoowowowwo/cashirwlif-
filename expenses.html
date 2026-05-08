@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة مصاريف شاهي وليف</title>
+    <title>إدارة مصاريف شاهي وليف - سحابي</title>
+    <!-- استدعاء Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
         :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
         body { background: var(--bg); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
@@ -29,7 +33,7 @@
 
 <div class="container">
     <a href="index.html" class="btn-back">⬅ رجوع للرئيسية</a>
-    <h2>تسجيل المصروفات</h2>
+    <h2>تسجيل المصروفات (الشهرية)</h2>
 
     <div class="form-group">
         <label>نوع المصروف</label>
@@ -52,7 +56,7 @@
         <input type="text" id="expNote" placeholder="مثلاً: شهر مايو">
     </div>
 
-    <button class="btn-save" onclick="addExpense()">حفظ المصروف</button>
+    <button class="btn-save" id="saveBtn" onclick="addExpense()">حفظ المصروف</button>
 
     <table>
         <thead>
@@ -68,56 +72,80 @@
 </div>
 
 <script>
+    // تهيئة Firebase بنفس الرابط الخاص بك
+    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     function addExpense() {
         const category = document.getElementById('expCategory').value;
         const amount = parseFloat(document.getElementById('expAmount').value);
         const note = document.getElementById('expNote').value;
-        const date = new Date().toLocaleDateString();
+        
+        // توحيد صيغة التاريخ لتقرأها كل الصفحات
+        const date = new Date().toISOString().split('T')[0]; 
+        const timestamp = Date.now();
 
         if (!amount || amount <= 0) {
             alert("يرجى إدخال مبلغ صحيح");
             return;
         }
 
-        const expense = { category, amount, note, date, id: Date.now() };
-        let expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
-        expenses.push(expense);
-        localStorage.setItem('shahi_expenses', JSON.stringify(expenses));
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerText = "جاري الحفظ...";
 
-        // تصفير الحقول وتحديث الجدول
-        document.getElementById('expAmount').value = '';
-        document.getElementById('expNote').value = '';
-        loadExpenses();
-    }
-
-    function loadExpenses() {
-        const expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
-        const tableBody = document.getElementById('expTableBody');
-        tableBody.innerHTML = '';
-
-        expenses.reverse().forEach(exp => {
-            tableBody.innerHTML += `
-                <tr>
-                    <td>${exp.category} <br> <small style="color:#888">${exp.note}</small></td>
-                    <td>${exp.amount.toFixed(2)} ﷼</td>
-                    <td>${exp.date}</td>
-                    <td class="delete-btn" onclick="deleteExpense(${exp.id})">✖</td>
-                </tr>
-            `;
+        // الحفظ في مسار expenses في Firebase
+        const expenseData = { category, amount, note, date, timestamp };
+        
+        db.ref('expenses').push(expenseData)
+        .then(() => {
+            document.getElementById('expAmount').value = '';
+            document.getElementById('expNote').value = '';
+            btn.disabled = false;
+            btn.innerText = "حفظ المصروف";
+        })
+        .catch(err => {
+            alert("خطأ في الحفظ: " + err);
+            btn.disabled = false;
         });
     }
 
-    function deleteExpense(id) {
+    function loadExpenses() {
+        // جلب المصاريف من Firebase وعرض آخر 20 مصروف
+        db.ref('expenses').limitToLast(20).on('value', snap => {
+            const tableBody = document.getElementById('expTableBody');
+            tableBody.innerHTML = '';
+            const data = snap.val();
+
+            if (data) {
+                // تحويل الكائن لمصفوفة وعكسها لعرض الأحدث أولاً
+                Object.keys(data).reverse().forEach(key => {
+                    const exp = data[key];
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td>${exp.category} <br> <small style="color:#888">${exp.note || ''}</small></td>
+                            <td>${parseFloat(exp.amount).toFixed(2)} ﷼</td>
+                            <td>${exp.date}</td>
+                            <td class="delete-btn" onclick="deleteExpense('${key}')">✖</td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+    }
+
+    function deleteExpense(key) {
         if(confirm('هل تريد حذف هذا المصرف؟')) {
-            let expenses = JSON.parse(localStorage.getItem('shahi_expenses')) || [];
-            expenses = expenses.filter(e => e.id !== id);
-            localStorage.setItem('shahi_expenses', JSON.stringify(expenses));
-            loadExpenses();
+            db.ref('expenses').child(key).remove();
         }
     }
 
     window.onload = loadExpenses;
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
