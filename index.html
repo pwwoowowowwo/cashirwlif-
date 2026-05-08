@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="شاهي وليف">
 
-    <title>لوحة تحكم شاهي وليف - نسخة التابلت</title>
+    <title>لوحة تحكم شاهي وليف - النسخة الكاملة</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -17,131 +17,86 @@
     <style>
         :root { 
             --maroon: #630000; --gold: #c5a059; --bg: #f4f7f6; 
-            --green: #27ae60; --red: #c0392b; --blue: #2980b9;
+            --green: #27ae60; --red: #c0392b; --blue: #2980b9; --orange: #f39c12; --purple: #8e44ad; --teal: #16a085;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
         
-        body { 
-            background: var(--bg); 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh; 
-        }
+        body { background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
 
-        #offline-notice {
-            display: none; width: 100%; background: var(--red); color: white;
-            text-align: center; padding: 10px; font-size: 16px; position: fixed; top: 0; z-index: 1000; font-weight: bold;
-        }
+        .header { text-align: center; margin-bottom: 25px; width: 100%; }
+        .header h1 { color: var(--maroon); margin: 0; font-size: 38px; font-weight: 900; }
+        .header p { color: var(--gold); font-size: 16px; margin-top: 5px; }
 
-        .header { text-align: center; margin-bottom: 30px; width: 100%; }
-        .header h1 { color: var(--maroon); margin: 0; font-size: 42px; font-weight: 900; }
-        .header p { color: var(--gold); font-size: 18px; letter-spacing: 1px; margin-top: 5px; }
-
-        /* تنسيق الإحصائيات للتابلت */
+        /* الإحصائيات اليومية */
         .stats-grid { 
-            width: 100%; 
-            max-width: 1100px; 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 20px; 
-            margin-bottom: 30px; 
+            width: 100%; max-width: 1100px; 
+            display: grid; grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; margin-bottom: 25px; 
         }
         .stat-card { 
-            background: white; 
-            padding: 25px 15px; 
-            border-radius: 20px; 
-            text-align: center; 
-            box-shadow: 0 8px 15px rgba(0,0,0,0.05); 
+            background: white; padding: 15px; border-radius: 20px; 
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
             border-top: 5px solid var(--gold);
-            transition: 0.3s;
         }
-        .stat-card small { color: #7f8c8d; font-size: 16px; font-weight: bold; }
-        .stat-card b { display: block; margin-top: 10px; font-size: 28px; color: var(--maroon); }
-        
-        /* تمييز كرت الربح والمصاريف */
+        .stat-card small { color: #7f8c8d; font-size: 13px; font-weight: bold; }
+        .stat-card b { display: block; margin-top: 5px; font-size: 22px; color: var(--maroon); }
         .stat-card.sales { border-top-color: var(--green); }
         .stat-card.expenses { border-top-color: var(--red); }
-        .stat-card.profit { background: #fffdf5; border: 2px solid var(--gold); }
-        .stat-card.profit b { color: var(--green); font-size: 35px; }
 
         .main-container { width: 100%; max-width: 1100px; }
         
-        /* شبكة الأقسام - 3 أعمدة للتابلت */
+        /* شبكة الأقسام الثمانية */
         .sections-grid { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 25px; 
+            grid-template-columns: repeat(4, 1fr); /* 4 أعمدة للتابلت */
+            gap: 15px; 
             width: 100%; 
         }
         
         .section-card { 
-            background: white; 
-            border-radius: 25px; 
-            padding: 40px 20px; 
-            text-decoration: none; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            transition: all 0.3s ease;
-            border: 1px solid #eee;
+            background: white; border-radius: 20px; padding: 25px 10px; 
+            text-decoration: none; display: flex; flex-direction: column; 
+            align-items: center; transition: 0.3s; border: 1px solid #eee;
             box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
         .section-card:active { transform: scale(0.95); background: #f9f9f9; }
-        .section-card h3 { margin: 15px 0 0; color: #333; font-size: 22px; }
+        .section-card h3 { margin: 12px 0 0; color: #333; font-size: 16px; font-weight: bold; }
         
-        .icon-circle { 
-            width: 80px; height: 80px; 
-            border-radius: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 40px; 
-        }
+        .icon-circle { width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
 
         /* ألوان الأيقونات */
-        .cashier .icon-circle { background: #fff4e5; color: #f39c12; }
+        .cashier .icon-circle { background: #fff4e5; color: var(--orange); }
         .sales-link .icon-circle { background: #e8faf0; color: var(--green); }
         .purchases-link .icon-circle { background: #e3f2fd; color: var(--blue); }
         .expenses-link .icon-circle { background: #fdf2f2; color: var(--red); }
-        .inventory .icon-circle { background: #ebf5fb; color: var(--blue); }
+        .monthly-link .icon-circle { background: #e8f8f5; color: var(--teal); }
+        .inventory-link .icon-circle { background: #f0f3f4; color: #34495e; } /* المستودع */
         .staff .icon-circle { background: #f5eef8; color: var(--purple); }
+        .reports-link .icon-circle { background: #fffde7; color: #f1c40f; }
 
-        .footer-tag { margin-top: 50px; text-align: center; color: #95a5a6; font-size: 16px; }
+        .footer-tag { margin-top: 30px; text-align: center; color: #95a5a6; font-size: 14px; }
         .footer-tag b { color: var(--maroon); }
 
+        /* للموبايل */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .sections-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
 
-<div id="offline-notice">⚠️ لا يوجد اتصال بالإنترنت - يتم العمل على النسخة الاحتياطية</div>
-
 <div class="header">
-    <div style="font-size:60px">🍃</div>
+    <div style="font-size:40px">🍃</div>
     <h1>شاهي وليف</h1>
-    <p>نظام الإدارة المتكامل - لوحة التحكم</p>
+    <p>نظام الإدارة الشامل</p>
 </div>
 
 <div class="stats-grid">
-    <div class="stat-card sales">
-        <small>مبيعات اليوم 💰</small>
-        <b id="todaySales">0.00</b>
-    </div>
-    <div class="stat-card">
-        <small>مشتريات اليوم 🛒</small>
-        <b id="todayPurchases" style="color:var(--blue)">0.00</b>
-    </div>
-    <div class="stat-card expenses">
-        <small>مصاريف اليوم 💸</small>
-        <b id="todayExpenses">0.00</b>
-    </div>
-    <div class="stat-card profit">
-        <small>صافي الربح (متوقع) ✨</small>
-        <b id="netProfit">0.00</b>
-        <span style="font-size:14px; color:var(--gold); font-weight:bold">ريال سعودي</span>
-    </div>
+    <div class="stat-card sales"><small>مبيعات اليوم</small><b id="todaySales">0.00</b></div>
+    <div class="stat-card"><small>المشتريات</small><b id="todayPurchases" style="color:var(--blue)">0.00</b></div>
+    <div class="stat-card expenses"><small>المصاريف</small><b id="todayExpenses">0.00</b></div>
+    <div class="stat-card" id="profitCard" style="border-top-width:8px"><small>الصافي</small><b id="netProfit">0.00</b></div>
 </div>
 
 <div class="main-container">
@@ -152,7 +107,7 @@
         </a>
         <a href="sales.html" class="section-card sales-link">
             <div class="icon-circle">📈</div>
-            <h3>سجل المبيعات</h3>
+            <h3>المبيعات</h3>
         </a>
         <a href="purchases.html" class="section-card purchases-link">
             <div class="icon-circle">🛒</div>
@@ -162,7 +117,11 @@
             <div class="icon-circle">💸</div>
             <h3>المصاريف</h3>
         </a>
-        <a href="inventory.html" class="section-card inventory">
+        <a href="monthly_analysis.html" class="section-card monthly-link">
+            <div class="icon-circle">📊</div>
+            <h3>المحلل الشهري</h3>
+        </a>
+        <a href="inventory.html" class="section-card inventory-link">
             <div class="icon-circle">📦</div>
             <h3>المستودع</h3>
         </a>
@@ -170,75 +129,48 @@
             <div class="icon-circle">👥</div>
             <h3>الموظفين</h3>
         </a>
+        <a href="reports.html" class="section-card reports-link">
+            <div class="icon-circle">📋</div>
+            <h3>التقارير</h3>
+        </a>
     </div>
 </div>
 
-<div class="footer-tag">
-    تصميم وتطوير <br>
-    <b>فهد المخلفي</b>
-</div>
+<div class="footer-tag">تصميم وتطوير <br> <b>فهد المخلفي</b></div>
 
 <script>
-    // إعدادات Firebase
     const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
-    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    function syncData() {
-        // استخدام تنسيق تاريخ ثابت للمقارنة YYYY-MM-DD
-        const now = new Date();
-        const today = now.toISOString().split('T')[0]; 
-        
-        // مراقبة الاتصال
-        db.ref(".info/connected").on("value", (snap) => {
-            document.getElementById('offline-notice').style.display = snap.val() === true ? 'none' : 'block';
-        });
-
-        // جلب البيانات وحساب الإجمالي لكل قسم
+    function syncDashboard() {
+        const today = new Date().toISOString().split('T')[0]; 
         const paths = ['sales', 'purchases', 'expenses'];
         paths.forEach(path => {
             db.ref(path).on('value', snap => {
                 let total = 0;
                 snap.forEach(child => {
-                    const data = child.val();
-                    // تأكد أن الحقل في Firebase اسمه date وقيمته تطابق YYYY-MM-DD
-                    if(data.date === today) {
-                        total += parseFloat(data.amount || 0);
-                    }
+                    if(child.val().date === today) total += parseFloat(child.val().amount || child.val().total || 0);
                 });
-                
-                if(path === 'sales') document.getElementById('todaySales').innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
-                if(path === 'purchases') document.getElementById('todayPurchases').innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
-                if(path === 'expenses') document.getElementById('todayExpenses').innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
-                
-                calculateNet();
+                const id = 'today' + path.charAt(0).toUpperCase() + path.slice(1);
+                document.getElementById(id).innerText = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+                updateProfit();
             });
         });
     }
 
-    function calculateNet() {
-        // استخراج الأرقام وحذف الفواصل لعمل الحسابات
-        const sales = parseFloat(document.getElementById('todaySales').innerText.replace(/,/g, '')) || 0;
-        const purchases = parseFloat(document.getElementById('todayPurchases').innerText.replace(/,/g, '')) || 0;
-        const expenses = parseFloat(document.getElementById('todayExpenses').innerText.replace(/,/g, '')) || 0;
-        
-        const net = sales - (purchases + expenses);
+    function updateProfit() {
+        const s = parseFloat(document.getElementById('todaySales').innerText.replace(/,/g, '')) || 0;
+        const p = parseFloat(document.getElementById('todayPurchases').innerText.replace(/,/g, '')) || 0;
+        const e = parseFloat(document.getElementById('todayExpenses').innerText.replace(/,/g, '')) || 0;
+        const net = s - (p + e);
         document.getElementById('netProfit').innerText = net.toLocaleString('en-US', {minimumFractionDigits: 2});
+        
+        const card = document.getElementById('profitCard');
+        card.style.borderTopColor = net >= 0 ? 'var(--green)' : 'var(--red)';
     }
 
-    // تسجيل الـ Service Worker للأوفلاين
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                console.log('جاهز للعمل بدون إنترنت ✅');
-            }).catch(err => console.log('SW Error:', err));
-        });
-    }
-
-    window.onload = syncData;
-</script>
-</body>
-</html>
+    window.onload = syncDashboard;
 </script>
 </body>
 </html>
