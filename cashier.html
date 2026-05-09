@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف - المطور</title>
+    <title>كاشير شاهي وليف - الترتيب الجديد</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -30,44 +30,45 @@
         .item-card { background: #fff; border-radius: 12px; padding: 20px 8px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
         /* الجهة اليسرى: السلة والدفع */
-        .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 10px; min-width: 350px; border-right: 1px solid #eee; height: 100%; position: relative; }
+        .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 10px; min-width: 350px; border-right: 1px solid #eee; height: 100%; }
         
-        /* السلة قابلة للتمرير فقط */
-        .cart-items { flex: 1; overflow-y: auto; margin-bottom: 10px; border-radius: 10px; padding: 5px; }
-        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
-        .cart-row span:first-child { color: #e74c3c; cursor: pointer; font-weight: 900; }
-
-        /* منطقة الحساب الثابتة (نفس تفاصيل الصورة) */
-        .cart-footer { 
+        /* القسم العلوي: الدفع والطباعة والإجمالي (ثابت) */
+        .payment-top-section {
             background: #fffdf5; 
             padding: 15px; 
-            border-radius: 25px; 
+            border-radius: 20px; 
             border: 2px solid #e0d5b5; 
-            flex-shrink: 0; /* تمنع القسم من التقلص */
+            flex-shrink: 0; 
             display: flex; 
             flex-direction: column; 
-            gap: 10px;
+            gap: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
-        .summary-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e0d5b5; padding-bottom: 10px; }
-        .total-label { font-size: 32px; font-weight: 900; color: var(--maroon); line-height: 1; }
-        .tax-details { text-align: right; color: #777; font-size: 14px; font-weight: bold; }
+        .summary-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e0d5b5; padding-bottom: 10px; }
+        .total-label { font-size: 34px; font-weight: 900; color: var(--maroon); line-height: 1; }
+        .tax-details { text-align: right; color: #555; font-size: 14px; font-weight: bold; }
 
-        /* توزيع الأزرار */
-        .payment-methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 5px 0; }
+        .payment-methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .method-btn { 
-            height: 65px; border-radius: 12px; border: 2px solid #ddd; background: white; 
-            cursor: pointer; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 5px;
+            height: 55px; border-radius: 12px; border: 2px solid #ddd; background: white; 
+            cursor: pointer; font-weight: 900; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 5px;
         }
         .method-btn.active { border-color: var(--maroon); color: var(--maroon); background: #fff; }
         .method-btn.cash.active { background: var(--maroon); color: white; border-color: var(--maroon); }
-        .method-btn img { width: 20px; height: 20px; }
 
         .btn-pay-final { 
-            width: 100%; background: var(--green); color: white; padding: 18px; border: none; 
-            border-radius: 20px; font-weight: 900; font-size: 24px; cursor: pointer; 
+            width: 100%; background: var(--green); color: white; padding: 15px; border: none; 
+            border-radius: 15px; font-weight: 900; font-size: 22px; cursor: pointer; 
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
+
+        /* القسم السفلي: السلة (قابلة للتمرير) */
+        .cart-bottom-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #eee; padding-top: 10px; }
+        .cart-items-wrapper { flex: 1; overflow-y: auto; background: #fcfcfc; border-radius: 15px; border: 1px solid #f0f0f0; }
+        .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
+        .cart-row span:first-child { color: #e74c3c; cursor: pointer; font-weight: 900; padding: 0 10px; }
 
         #mixedModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-body { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
@@ -78,8 +79,6 @@
             body * { visibility: hidden; }
             #receipt-print, #receipt-print * { visibility: visible; }
             #receipt-print { display: block; position: absolute; left: 0; top: 0; width: 72mm; padding: 5px; direction: rtl; }
-            .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; }
-            .print-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
         }
     </style>
 </head>
@@ -108,19 +107,12 @@
         </div>
 
         <div class="cart-side">
-            <input type="tel" id="customerPhone" placeholder="رقم الجوال (اختياري)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
-            
-            <!-- قائمة السلة القابلة للتمرير -->
-            <div id="cartList" class="cart-items"></div>
-            
-            <!-- قسم الدفع الثابت أسفل السلة -->
-            <div class="cart-footer">
+            <div class="payment-top-section">
                 <div class="summary-header">
-                    <div class="total-label"><span id="grandTotal">0.00</span> ريال</div>
+                    <div class="total-label"><span id="grandTotal">0.00</span> ﷼</div>
                     <div class="tax-details">
-                        <div style="font-size: 18px; color:black; margin-bottom:5px;">الإجمالي:</div>
-                        <div>قبل الضريبة: <span id="subTotal">0.00</span> ريال</div>
-                        <div>ضريبة (15%): <span id="taxAmount">0.00</span> ريال</div>
+                        <div style="color:black; font-size: 16px;">الإجمالي</div>
+                        <div>الضريبة: <span id="taxAmount">0.00</span></div>
                     </div>
                 </div>
 
@@ -133,6 +125,14 @@
                 <button class="btn-pay-final" onclick="handlePayment()">
                     <span>🧾</span> إتمام و طباعة
                 </button>
+            </div>
+
+            <div class="cart-bottom-section">
+                <input type="tel" id="customerPhone" placeholder="رقم الجوال (اختياري)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+                <h4 style="margin-bottom: 5px; color: #666; font-size: 13px;">الأصناف المختارة:</h4>
+                <div class="cart-items-wrapper">
+                    <div id="cartList"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -153,13 +153,13 @@
     <div id="receipt-print"></div>
 
     <script>
+        // ... (نفس السكربت البرمجي الخاص بك للتعامل مع الفايربيز والسلة والطباعة)
         const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let allProducts = [], cart = [], payMethod = 'نقدي', currentCat = 'tea';
 
-        // مراقبة حالة الشبكة
         function checkNet() {
             const dot = document.getElementById('netStatus');
             if(navigator.onLine) { dot.className = 'status-dot online'; syncOfflineSales(); } 
@@ -168,7 +168,6 @@
         window.addEventListener('online', checkNet);
         window.addEventListener('offline', checkNet);
 
-        // تحميل المنتجات
         const cached = localStorage.getItem('local_products');
         if(cached) { allProducts = JSON.parse(cached); renderItems(); }
 
@@ -214,7 +213,6 @@
             const subtotal = total / 1.15;
             const tax = total - subtotal;
             document.getElementById('grandTotal').innerText = total.toFixed(2);
-            document.getElementById('subTotal').innerText = subtotal.toFixed(2);
             document.getElementById('taxAmount').innerText = tax.toFixed(2);
         }
 
@@ -226,12 +224,22 @@
             btn.classList.add('active');
         }
 
+        function handlePayment() {
+            if (cart.length === 0) return;
+            const total = parseFloat(document.getElementById('grandTotal').innerText);
+            if (payMethod === 'مختلط') {
+                document.getElementById('cashInput').value = "";
+                document.getElementById('mixedModal').style.display = 'flex';
+            } else {
+                processOrder(payMethod, {cash: payMethod === 'نقدي' ? total : 0, card: payMethod === 'شبكة' ? total : 0});
+            }
+        }
+
         async function processOrder(method, details) {
             const order = {
                 items: cart.map(i => ({ name: i.name, q: i.qty, price: i.price, totalItem: (i.qty * i.price).toFixed(2) })),
                 total: document.getElementById('grandTotal').innerText,
                 tax: document.getElementById('taxAmount').innerText,
-                subtotal: document.getElementById('subTotal').innerText,
                 method, paymentDetails: details,
                 phone: document.getElementById('customerPhone').value || "عميل محلي",
                 timestamp: Date.now()
@@ -252,17 +260,6 @@
             if(queue.length === 0) return;
             for(const o of queue) { try { await db.ref('sales').push(o); } catch(e) { break; } }
             localStorage.setItem('shahi_offline_queue', "[]");
-        }
-
-        function handlePayment() {
-            if (cart.length === 0) return;
-            const total = parseFloat(document.getElementById('grandTotal').innerText);
-            if (payMethod === 'مختلط') {
-                document.getElementById('cashInput').value = "";
-                document.getElementById('mixedModal').style.display = 'flex';
-            } else {
-                processOrder(payMethod, {cash: payMethod === 'نقدي' ? total : 0, card: payMethod === 'شبكة' ? total : 0});
-            }
         }
 
         function calculateSplit() {
@@ -286,15 +283,12 @@
             const printDiv = document.getElementById('receipt-print');
             const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.q}</td><td align="left">${i.totalItem}</td></tr>`).join('');
             printDiv.innerHTML = `
-                <div class="receipt-header"><h3>🌿 شاهي وليف</h3><p>فاتورة ضريبية مبسطة</p></div>
-                <p style="font-size:10px;">التاريخ: ${new Date(order.timestamp).toLocaleString('ar-SA')}</p>
-                <table class="print-table"><tbody>${itemsHtml}</tbody></table>
-                <div style="border-top:1px dashed #000; padding-top:5px; font-size:12px;">
-                    <div style="display:flex; justify-content:space-between;"><span>قبل الضريبة:</span><span>${order.subtotal}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>الضريبة 15%:</span><span>${order.tax}</span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>الإجمالي:</span><span>${order.total} ريال</span></div>
-                </div>
-                <div style="text-align:center; margin-top:15px; font-size:10px;">شكراً لزيارتكم</div>
+                <div style="text-align:center;"><h3>🌿 شاهي وليف</h3><p>فاتورة ضريبية مبسطة</p></div>
+                <hr>
+                <table style="width:100%; font-size:12px;"><tbody>${itemsHtml}</tbody></table>
+                <hr>
+                <div style="font-weight:bold;">الإجمالي: ${order.total} ريال</div>
+                <div style="font-size:10px;">شامل الضريبة: ${order.tax} ريال</div>
             `;
             setTimeout(() => { window.print(); }, 500);
         }
