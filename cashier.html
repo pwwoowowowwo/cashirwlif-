@@ -73,6 +73,33 @@
         #mixedModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-body { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
+
+        /* ======================================================= */
+        /* 🖨️ منطقة الفاتورة الحرارية المخفية داخل الكاشير */
+        /* ======================================================= */
+        #hiddenPrintArea { display: none; }
+
+        @media print {
+            @page { size: 72mm auto; margin: 0; }
+            body * { display: none !important; } /* إخفاء كل عناصر شاشة الكاشير والأزرار */
+            #hiddenPrintArea, #hiddenPrintArea * { display: block !important; } /* إظهار الفاتورة الصافية فقط */
+            #hiddenPrintArea { 
+                background: white; 
+                width: 72mm; 
+                padding: 6mm 3mm; 
+                box-sizing: border-box; 
+                direction: rtl;
+            }
+            .p-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+            .p-title { font-size: 18px; font-weight: bold; margin-bottom: 4px; color: #000; }
+            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; color: #000; }
+            .p-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+            .p-table th { border-bottom: 1px solid #000; text-align: right; font-size: 11px; padding-bottom: 4px; font-weight: bold; }
+            .p-table td { padding: 5px 0; font-size: 11px; vertical-align: top; font-weight: bold; }
+            .p-total-section { border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
+            .p-total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; }
+            .p-footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; color: #000; }
+        }
     </style>
 </head>
 <body>
@@ -140,6 +167,37 @@
             </div>
             <button class="btn-pay-final" style="font-size: 18px; padding: 10px;" onclick="confirmMixedPayment()">تأكيد العملية</button>
             <button onclick="closeModal()" style="margin-top:10px; border:none; background:none; color:grey; cursor:pointer;">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="hiddenPrintArea">
+        <div class="p-header">
+            <div class="p-title" id="p_Title">🌿 شاهي وليف</div>
+            <div id="p_Header" style="white-space: pre-line; font-size: 11px; font-weight: bold; line-height: 1.4;"></div>
+        </div>
+        <div id="p_OrderInfo"></div>
+        <table class="p-table">
+            <thead>
+                <tr>
+                    <th>الصنف</th>
+                    <th style="text-align: center; width: 40px;">العدد</th>
+                    <th style="text-align: left; width: 60px;">المجموع</th>
+                </tr>
+            </thead>
+            <tbody id="p_ItemsList"></tbody>
+        </table>
+        <div class="p-total-section">
+            <div id="p_TaxCalculation"></div>
+            <div class="p-total-row">
+                <span>الإجمالي الشامل:</span>
+                <span id="p_GrandTotal">0.00 ﷼</span>
+            </div>
+            <div id="p_PaymentDetails" style="font-size: 11px; margin-top: 5px; font-weight: bold;"></div>
+        </div>
+        <div class="p-footer">
+            <div id="p_Footer" style="white-space: pre-line; font-weight: bold;"></div>
+            <div style="margin-top: 8px; font-size: 8px; font-weight: bold; letter-spacing: 0.5px; text-align: center;">نظام شاهي وليف السحابي الموحد</div>
+            <div style="height: 45px;"></div>
         </div>
     </div>
 
@@ -226,7 +284,6 @@
         }
 
         async function processOrder(method, details) {
-            // توليد كود فاتورة متسلسل فريد هنا قبل الحفظ البرمجي لعدم التكرار
             const generatedInvoiceCode = "INV-" + Math.floor(Date.now() / 1000);
 
             const order = {
@@ -245,12 +302,74 @@
 
             if(navigator.onLine) syncOfflineSales();
             
-            // تم إلغاء استدعاء وظيفة printReceipt() المحلية التي كانت تفتح طباعة الشاشة القديمة
-            console.log("تم ترحيل الطلب سحابياً بنجاح ومحرك الفواتير سيتولى طباعته الآن.");
+            // 🖨️ تشغيل هندسة بناء الفاتورة المباشرة والطباعة فوراً من الكاشير
+            directPrintReceipt(order);
             
             cart = []; 
             updateCart(); 
             document.getElementById('customerPhone').value = "";
+        }
+
+        // دالة بناء وطباعة الفاتورة الحرارية الصافية فوراً دون شاشات ولا أزرار
+        function directPrintReceipt(order) {
+            // جلب نصوص لوحة التحكم المخزنة في إعدادات المتصفح لكي تظهر فوراً وديناميكياً
+            const savedSettings = JSON.parse(localStorage.getItem('receiptSettings')) || {
+                title: "🌿 شاهي وليف",
+                header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
+                footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃"
+            };
+
+            document.getElementById('p_Title').innerText = savedSettings.title;
+            document.getElementById('p_Header').innerText = savedSettings.header;
+            document.getElementById('p_Footer').innerText = savedSettings.footer;
+
+            const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
+            let totalQty = 0;
+
+            document.getElementById('p_OrderInfo').innerHTML = `
+                <div class="p-row"><span>رقم الفاتورة:</span> <span style="font-weight:bold;">${order.invoiceId}</span></div>
+                <div class="p-row"><span>التاريخ والوقت:</span> <span>${orderDate}</span></div>
+                <div class="p-row"><span>رقم العميل:</span> <span>${order.phone}</span></div>
+            `;
+
+            document.getElementById('p_ItemsList').innerHTML = order.items.map(item => {
+                const qty = parseInt(item.q || 1);
+                totalQty += qty;
+                const itemTotal = parseFloat(item.totalItem);
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td style="text-align: center;">${qty}</td>
+                        <td style="text-align: left;">${itemTotal.toFixed(2)} ﷼</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const grandTotalVal = parseFloat(order.total || 0);
+            const taxVal = parseFloat(order.tax || 0).toFixed(2);
+            const netVal = (grandTotalVal - taxVal).toFixed(2);
+
+            document.getElementById('p_TaxCalculation').innerHTML = `
+                <div class="p-row" style="color:#000;"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
+                <div class="p-row" style="color:#000;"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
+                <div class="p-row" style="color:#000;"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
+            `;
+
+            document.getElementById('p_GrandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
+
+            let paymentMethodText = `طريقة الدفع: ${order.method}`;
+            if (order.paymentDetails) {
+                let details = [];
+                if(parseFloat(order.paymentDetails.cash) > 0) details.push(`كاش: ${parseFloat(order.paymentDetails.cash).toFixed(2)} ﷼`);
+                if(parseFloat(order.paymentDetails.card) > 0) details.push(`شبكة: ${parseFloat(order.paymentDetails.card).toFixed(2)} ﷼`);
+                if(details.length > 0) paymentMethodText += ` (${details.join(' + ')})`;
+            }
+            document.getElementById('p_PaymentDetails').innerText = paymentMethodText;
+
+            // إطلاق أمر الطباعة الفوري والصامت لورقة المتصفح الحرارية
+            setTimeout(() => {
+                window.print();
+            }, 300);
         }
 
         async function syncOfflineSales() {
@@ -277,9 +396,6 @@
         }
 
         function closeModal() { document.getElementById('mixedModal').style.display = 'none'; }
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
