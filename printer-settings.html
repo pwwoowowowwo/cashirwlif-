@@ -62,23 +62,23 @@
         /* ======================================================= */
         @media print {
             @page {
-                size: 72mm auto; /* إجبار الطابعة على قياس الورق الحراري القياسي */
-                margin: 0;       /* إلغاء حواف المتصفح الافتراضية (التاريخ والروابط) */
+                size: 72mm auto; 
+                margin: 0;       
             }
             body { 
                 background: white; 
                 padding: 0; 
                 margin: 0; 
                 width: 72mm; 
-                display: block; /* إلغاء الـ Flexbox الخاص بالشاشة */
+                display: block; 
             }
             .no-print { 
-                display: none !important; /* إخفاء لوحة التحكم والأزرار تماماً عن الطابعة */
+                display: none !important; 
             }
             #printArea { 
                 box-shadow: none; 
                 width: 72mm; 
-                padding: 8mm 4mm; /* تنسيق الهوامش الداخلية للورقة */
+                padding: 8mm 4mm; 
                 border-radius: 0;
                 margin: 0;
             }
@@ -90,25 +90,25 @@
 <div id="editorPanel" class="no-print">
     <h4 style="color: #630000;">⚙️ إعدادات الفاتورة الضريبية</h4>
     <label>اسم المنشأة / المحل:</label>
-    <input type="text" id="editTitle" oninput="updateLive()" value="🌿 شاهي وليف">
+    <input type="text" id="editTitle" oninput="updateLive()" value="">
     
-    <label>بيانات الترويسة والعنوان:</label>
-    <textarea id="editHeader" oninput="updateLive()" rows="3">الرقم الضريبي: 311245678900003&#10;الفرع: الرئيسي&#10;العنوان: الوجه - الطريق العام</textarea>
+    <label>بيانات الترويسة والعنوان والرقم الضريبي:</label>
+    <textarea id="editHeader" oninput="updateLive()" rows="4" placeholder="اكتب هنا الرقم الضريبي، اسم الفرع، والعنوان..."></textarea>
     
     <label>نص أسفل الفاتورة:</label>
-    <textarea id="editFooter" oninput="updateLive()" rows="2">شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃</textarea>
+    <textarea id="editFooter" oninput="updateLive()" rows="2" placeholder="شكراً لزيارتكم..."></textarea>
     
     <button onclick="saveSettings()" class="btn" style="background: #630000; color: white;">حفظ الإعدادات في المتصفح 💾</button>
     <button onclick="window.print()" class="btn" style="background: #444; color: white;">تجربة طباعة يدوية 🖨️</button>
     <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
     <p style="font-size: 11px; color: #777; line-height: 1.4; text-align: justify;">
-        * تم فصل المنظومة بنجاح. بمجرد استقبال طلب مبيعات جديد من شاشة الكاشير، سيقوم هذا المحرك بطباعة الفاتورة الحرارية الصافية تلقائياً دون طباعة الأزرار أو الشاشة.
+        * تم ربط حقول الطباعة الحية بالإعدادات مباشرة؛ ما تكتبه وتطبع بناءً عليه في الشاشة هو ما سيظهر على الورق تماماً وبشكل ديناميكي.
     </p>
 </div>
 
 <div id="printArea">
     <div class="receipt-header">
-        <div class="receipt-title" id="dispTitle">🌿 شاهي وليف</div>
+        <div class="receipt-title" id="dispTitle"></div>
         <div id="dispHeader" style="white-space: pre-line; font-size: 11px; font-weight: bold; line-height: 1.5;"></div>
     </div>
 
@@ -137,7 +137,8 @@
     <div class="footer">
         <div id="dispFooter" style="white-space: pre-line; font-weight: bold;"></div>
         <div style="margin-top: 12px; font-weight: 900; font-size: 9px; letter-spacing: 1px;">نظام شاهي وليف السحابي الموحد</div>
-        <div style="height: 60px;"></div> </div>
+        <div style="height: 60px;"></div> 
+    </div>
 </div>
 
 <script>
@@ -145,11 +146,11 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // جلب الإعدادات المستقلة للفاتورة من الذاكرة المحلية
+    // جلب الإعدادات من الذاكرة المحلية بشكل مباشر ونظيف
     function loadSettings() {
         const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
             title: "🌿 شاهي وليف",
-            header: "الرقم الضريبي: 311245678900003\nالفرع: الرئيسي\nالعنوان: الوجه - الطريق العام",
+            header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
             footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃"
         };
         document.getElementById('editTitle').value = saved.title;
@@ -158,6 +159,7 @@
         updateLive();
     }
 
+    // تحديث فوري في شاشة المعاينة بناءً على ما يكتبه المستخدم في الحقول
     function updateLive() {
         document.getElementById('dispTitle').innerText = document.getElementById('editTitle').value;
         document.getElementById('dispHeader').innerText = document.getElementById('editHeader').value;
@@ -171,31 +173,29 @@
             footer: document.getElementById('editFooter').value
         };
         localStorage.setItem('receiptSettings', JSON.stringify(settings));
-        alert("تم حفظ بيانات الفاتورة بنجاح! ✅");
+        alert("تم حفظ بيانات الفاتورة وتثبيتها بنجاح! ✅");
+        updateLive(); // لضمان التحديث الفوري
     }
 
-    // مراقبة قاعدة البيانات: عند إضافة أي طلب جديد في صفحة الكاشير يتم التقاطه حياً هنا
     let isFirstLoad = true;
     db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
         const order = snapshot.val();
         
-        // منع المحرك من طباعة آخر طلب قديم عند فتح الصفحة أول مرة
         if (isFirstLoad) {
             isFirstLoad = false;
-            renderReceipt(order); // يعرضه على الشاشة فقط كمعاينة بدون طباعة فورية
+            renderReceipt(order); 
             return;
         }
         
-        // طباعة حية وتلقائية للطلبات الجديدة فور حدوثها
+        // قبل بدء عملية الطباعة الحية التلقائية نضمن إعادة تحديث البيانات من مربعات النص مباشرة لكي لا يطبع البيانات القديمة الكاش
+        updateLive();
         renderReceipt(order);
     });
 
     function renderReceipt(order) {
-        // 1. توليد رقم فاتورة تلقائي فريد ومعتمد للطلب بناءً على وقت إنشائه
         const generatedInvoiceId = order.invoiceId || "INV-" + Math.floor((order.timestamp || Date.now()) / 1000);
         const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
         
-        // 2. حساب إجمالي عدد قطع المنتجات المباعة في الفاتورة الحالية
         let totalQty = 0;
 
         document.getElementById('orderInfo').innerHTML = `
@@ -204,7 +204,6 @@
             <div class="info-row"><span>رقم العميل:</span> <span>${order.phone || 'عميل سفري'}</span></div>
         `;
 
-        // 3. بناء وتنسيق قائمة الأصناف والأعداد والمجاميع
         document.getElementById('itemsList').innerHTML = order.items.map(item => {
             const qty = parseInt(item.q || item.qty || 1);
             totalQty += qty;
@@ -218,7 +217,6 @@
             `;
         }).join('');
 
-        // 4. الحسبة الضريبية الدقيقة (15%) بناءً على الإجمالي الكلي القادم من الكاشير
         const grandTotalVal = parseFloat(order.total || 0);
         const taxVal = (grandTotalVal * 0.15).toFixed(2);
         const netVal = (grandTotalVal - taxVal).toFixed(2);
@@ -231,7 +229,6 @@
 
         document.getElementById('grandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
         
-        // 5. استخراج وعرض تفاصيل طرق الدفع (نقدي / شبكة / مختلط)
         let paymentMethodText = `طريقة الدفع: ${order.method || 'نقدي'}`;
         if (order.paymentDetails) {
             let details = [];
@@ -241,7 +238,6 @@
         }
         document.getElementById('paymentDetails').innerText = paymentMethodText;
 
-        // 6. تفعيل أمر الطباعة الحراري الصامت والمعزول بعد اكتمال بناء عناصر الفاتورة
         if (!isFirstLoad) {
             setTimeout(() => { 
                 window.print(); 
@@ -252,5 +248,4 @@
     window.onload = loadSettings;
 </script>
 </body>
-</html>
 </html>
