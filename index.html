@@ -72,6 +72,7 @@
         .inventory-link .icon-circle { background: #f0f3f4; color: #34495e; }
         .staff .icon-circle { background: #f5eef8; color: var(--purple); }
         .reports-link .icon-circle { background: #fffde7; color: #f1c40f; }
+        .printer-link .icon-circle { background: #fff5f5; color: var(--maroon); border: 1px solid var(--gold); }
 
         .footer-tag { margin-top: 30px; text-align: center; color: #95a5a6; font-size: 14px; }
         .footer-tag b { color: var(--maroon); }
@@ -131,6 +132,10 @@
             <div class="icon-circle">📋</div>
             <h3>التقارير</h3>
         </a>
+        <a href="printer-settings.html" class="section-card printer-link">
+            <div class="icon-circle">🖨️</div>
+            <h3>إعدادات الطابعة</h3>
+        </a>
     </div>
 </div>
 
@@ -142,7 +147,6 @@
     const db = firebase.database();
 
     function syncDashboard() {
-        // الحصول على تاريخ اليوم بتنسيق YYYY-MM-DD
         const todayStr = new Date().toISOString().split('T')[0]; 
         const paths = ['sales', 'purchases', 'expenses'];
 
@@ -153,18 +157,15 @@
                     const data = child.val();
                     let isToday = false;
 
-                    // التحقق من التاريخ النصي (مثل المصاريف)
                     if (data.date && data.date === todayStr) {
                         isToday = true;
                     } 
-                    // التحقق من التوقيت الرقمي (مثل الكاشير عندك)
                     else if (data.timestamp) {
                         const d = new Date(data.timestamp).toISOString().split('T')[0];
                         if (d === todayStr) isToday = true;
                     }
 
                     if (isToday) {
-                        // جمع القيمة المالية بأي مسمى موجود (amount أو total)
                         total += parseFloat(data.amount || data.total || 0);
                     }
                 });
