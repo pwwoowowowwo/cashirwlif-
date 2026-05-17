@@ -32,7 +32,6 @@
         /* الجهة اليسرى: السلة والدفع */
         .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 10px; min-width: 350px; border-right: 1px solid #eee; height: 100%; }
         
-        /* القسم العلوي: الدفع والطباعة والإجمالي (ثابت) */
         .payment-top-section {
             background: #fffdf5; 
             padding: 15px; 
@@ -64,7 +63,6 @@
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
-        /* القسم السفلي: السلة (قابلة للتمرير) */
         .cart-bottom-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #eee; padding-top: 10px; }
         .cart-items-wrapper { flex: 1; overflow-y: auto; background: #fcfcfc; border-radius: 15px; border: 1px solid #f0f0f0; }
         .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
@@ -75,27 +73,35 @@
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
 
         /* ======================================================= */
-        /* 🖨️ منطقة الفاتورة الحرارية المخفية داخل الكاشير */
+        /* 🖨️ إعدادات وهندسة الجدول لورق الـ 80mm الحقيقي ليتراص أفقياً */
         /* ======================================================= */
         #hiddenPrintArea { display: none; }
 
         @media print {
             @page { size: 72mm auto; margin: 0; }
-            body * { display: none !important; } /* إخفاء كل عناصر شاشة الكاشير والأزرار */
-            #hiddenPrintArea, #hiddenPrintArea * { display: block !important; } /* إظهار الفاتورة الصافية فقط */
+            body * { display: none !important; } 
+            #hiddenPrintArea, #hiddenPrintArea * { display: block !important; } 
             #hiddenPrintArea { 
                 background: white; 
                 width: 72mm; 
-                padding: 6mm 3mm; 
+                padding: 6mm 2mm; 
                 box-sizing: border-box; 
                 direction: rtl;
             }
             .p-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
             .p-title { font-size: 18px; font-weight: bold; margin-bottom: 4px; color: #000; }
-            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; color: #000; }
-            .p-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-            .p-table th { border-bottom: 1px solid #000; text-align: right; font-size: 11px; padding-bottom: 4px; font-weight: bold; }
-            .p-table td { padding: 5px 0; font-size: 11px; vertical-align: top; font-weight: bold; }
+            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0; color: #000; }
+            
+            /* هندسة الجدول ليكون في سطر واحد مستقيم */
+            .p-table { width: 100%; border-collapse: collapse; margin: 8px 0; table-layout: fixed; }
+            .p-table th { border-bottom: 1px solid #000; font-size: 12px; padding-bottom: 5px; font-weight: bold; color: #000; }
+            .p-table td { padding: 6px 0; font-size: 12px; vertical-align: middle; font-weight: bold; color: #000; word-wrap: break-word; }
+            
+            /* توزيع مساحات الأعمدة بدقة */
+            .col-name { text-align: right; width: 55%; }
+            .col-qty { text-align: center; width: 15%; }
+            .col-total { text-align: left; width: 30%; }
+
             .p-total-section { border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
             .p-total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; }
             .p-footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; color: #000; }
@@ -179,9 +185,9 @@
         <table class="p-table">
             <thead>
                 <tr>
-                    <th>الصنف</th>
-                    <th style="text-align: center; width: 40px;">العدد</th>
-                    <th style="text-align: left; width: 60px;">المجموع</th>
+                    <th class="col-name">الصنف</th>
+                    <th class="col-qty">العدد</th>
+                    <th class="col-total">المجموع</th>
                 </tr>
             </thead>
             <tbody id="p_ItemsList"></tbody>
@@ -302,7 +308,6 @@
 
             if(navigator.onLine) syncOfflineSales();
             
-            // 🖨️ تشغيل هندسة بناء الفاتورة المباشرة والطباعة فوراً من الكاشير
             directPrintReceipt(order);
             
             cart = []; 
@@ -310,9 +315,7 @@
             document.getElementById('customerPhone').value = "";
         }
 
-        // دالة بناء وطباعة الفاتورة الحرارية الصافية فوراً دون شاشات ولا أزرار
         function directPrintReceipt(order) {
-            // جلب نصوص لوحة التحكم المخزنة في إعدادات المتصفح لكي تظهر فوراً وديناميكياً
             const savedSettings = JSON.parse(localStorage.getItem('receiptSettings')) || {
                 title: "🌿 شاهي وليف",
                 header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
@@ -338,9 +341,9 @@
                 const itemTotal = parseFloat(item.totalItem);
                 return `
                     <tr>
-                        <td>${item.name}</td>
-                        <td style="text-align: center;">${qty}</td>
-                        <td style="text-align: left;">${itemTotal.toFixed(2)} ﷼</td>
+                        <td class="col-name">${item.name}</td>
+                        <td class="col-qty">${qty}</td>
+                        <td class="col-total">${itemTotal.toFixed(2)} ﷼</td>
                     </tr>
                 `;
             }).join('');
@@ -350,9 +353,9 @@
             const netVal = (grandTotalVal - taxVal).toFixed(2);
 
             document.getElementById('p_TaxCalculation').innerHTML = `
-                <div class="p-row" style="color:#000;"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
-                <div class="p-row" style="color:#000;"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
-                <div class="p-row" style="color:#000;"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
+                <div class="p-row"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
+                <div class="p-row"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
+                <div class="p-row"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
             `;
 
             document.getElementById('p_GrandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
@@ -366,7 +369,6 @@
             }
             document.getElementById('p_PaymentDetails').innerText = paymentMethodText;
 
-            // إطلاق أمر الطباعة الفوري والصامت لورقة المتصفح الحرارية
             setTimeout(() => {
                 window.print();
             }, 300);
