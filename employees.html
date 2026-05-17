@@ -2,74 +2,91 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>نظام حضور وحساب رواتب شاهي وليف</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #fdfdfb; --green: #27ae60; --red: #c0392b; --blue: #2980b9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 900px; margin: auto; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .admin-entry-btn { background: var(--maroon); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f7f6; --green: #27ae60; --red: #c0392b; --orange: #f39c12; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        .staff-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-top: 5px solid var(--gold); text-align: center; margin-bottom: 20px; }
-        select, .action-select { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; }
+        .container { width: 100%; max-width: 900px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #eee; }
+        .nav-btn { background: #f0f0f0; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; color: #555; font-size: 14px; }
+        .admin-entry-btn { background: var(--maroon); color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
         
-        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.3s; flex: 1; min-width: 140px; }
+        .staff-card { background: white; padding: 35px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-top: 5px solid var(--gold); text-align: center; margin-bottom: 20px; }
+        .staff-card h2 { color: var(--maroon); margin-bottom: 8px; font-weight: 900; }
+        .staff-card p.subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 25px; }
+        
+        select, input[type="text"], input[type="number"] { width: 100%; max-width: 400px; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 2px solid #eee; font-size: 16px; text-align: center; font-weight: bold; }
+        select:focus, input:focus { border-color: var(--maroon); outline: none; }
+        
+        /* شاشة العداد الحي */
+        .live-timer-box { background: #fffde7; border: 2px dashed var(--gold); padding: 15px; border-radius: 12px; max-width: 400px; margin: 0 auto 20px auto; display: none; }
+        .live-timer-box p { font-size: 14px; color: #555; font-weight: bold; }
+        .live-timer-box h1 { font-size: 32px; color: var(--maroon); font-family: monospace; margin: 5px 0; }
+        
+        .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; max-width: 500px; margin: 0 auto; }
+        .btn { padding: 15px 25px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; color: white; font-size: 16px; transition: 0.2s; flex: 1; min-width: 140px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-in { background: var(--green); }
         .btn-out { background: var(--red); }
+        .btn-break { background: var(--orange); }
+        .btn-return { background: #2980b9; }
+        .btn:active { transform: scale(0.98); }
         
-        #adminArea { display: none; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; }
-        th { background: #f8f8f8; color: var(--maroon); }
+        #adminArea { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 20px; border: 1px solid #eee; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f5f5f5; padding-bottom: 15px; margin-bottom: 20px; }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
-        .pin-field { font-size: 24px; width: 120px; text-align: center; padding: 10px; border: 2px solid var(--gold); border-radius: 8px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #f5f5f5; text-align: right; }
+        th { background: #fafafa; color: var(--maroon); font-weight: bold; }
+        tr:hover { background: #fcfcfc; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }
+        .modal-box { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .pin-field { font-size: 28px; width: 140px; text-align: center; padding: 8px; border: 2px solid var(--gold); border-radius: 10px; margin-bottom: 20px; letter-spacing: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="top-bar">
-        <div style="font-weight: bold; color: var(--maroon);">🌿 شاهي وليف</div>
+        <a href="index.html" class="nav-btn">🔙 القائمة الرئيسية</a>
+        <div style="font-weight: 900; color: var(--maroon); font-size: 18px;">🌿 شاهي وليف</div>
         <button class="admin-entry-btn" onclick="openPin()">🔐 لوحة المدير</button>
     </div>
 
-    <!-- واجهة الموظف -->
     <div class="staff-card">
         <h2>نظام التحضير الذكي</h2>
+        <p class="subtitle">اختر اسمك لمتابعة وقت الشفت الحالي أو تسجيل حركة جديدة</p>
+        
         <select id="staffSelector">
             <option value="">-- اختر اسمك من القائمة --</option>
         </select>
 
-        <div id="checkInArea">
-            <button class="btn btn-in" onclick="performAction('دخول')">تسجيل دخول ✅</button>
+        <div id="timerBox" class="live-timer-box">
+            <p id="timerLabel">⏳ شفت العمل الحالي مستمر منذ:</p>
+            <h1 id="liveClock">00:00:00</h1>
+            <p style="font-size: 12px; color: var(--green);" id="liveEarn">المستحق الحالي: 0.00 ﷼</p>
         </div>
 
-        <div id="checkOutArea" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-            <p style="font-weight:bold; color:var(--maroon)">نوع الخروج الحالي:</p>
-            <select id="outType" class="action-select">
-                <option value="نهاية الشفت">نهاية الشفت (كامل)</option>
-                <option value="بريك صلاة">خروج للصلاة (يخصم 20 د)</option>
-                <option value="بريك عشاء">خروج للعشاء (يخصم 20 د)</option>
-            </select>
-            <button class="btn btn-out" onclick="performAction('خروج')">تأكيد الخروج 🏁</button>
-        </div>
+        <div class="btn-group" id="actionArea" style="display: none;"></div>
         
-        <p id="statusMsg" style="margin-top: 20px; font-weight: bold;"></p>
+        <p id="statusMsg" style="margin-top: 25px; font-weight: bold; font-size: 15px;"></p>
     </div>
 
-    <!-- لوحة الإدارة -->
     <div id="adminArea">
-        <h3 style="color: var(--maroon);">📊 تقارير الرواتب وساعات العمل</h3>
-        <div style="background:#f9f9f9; padding:15px; border-radius:8px; margin-bottom:15px;">
-            <input type="text" id="newName" placeholder="اسم الموظف" style="padding:8px; width:150px;">
-            <input type="number" id="newSalary" placeholder="الراتب الشهري" style="padding:8px; width:120px;">
-            <button onclick="addStaff()" style="padding:8px 15px; background:var(--maroon); color:white; border:none; border-radius:5px;">إضافة موظف</button>
+        <div class="admin-header">
+            <h3 style="color: var(--maroon); font-weight: 900;">📊 تقارير الرواتب وساعات العمل</h3>
+            <button onclick="document.getElementById('adminArea').style.display='none'" style="background:none; border:none; color:#95a5a6; cursor:pointer; font-weight:bold;">إغلاق ✕</button>
+        </div>
+        
+        <div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="newName" placeholder="اسم الموظف الجديد" style="max-width:200px; margin:0;">
+            <input type="number" id="newSalary" placeholder="الراتب الشهري (﷼)" style="max-width:150px; margin:0;">
+            <button onclick="addStaff()" style="padding:12px 20px; background:var(--maroon); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">➕ إضافة الموظف</button>
         </div>
         
         <div style="overflow-x:auto;">
@@ -78,10 +95,10 @@
                     <tr>
                         <th>الموظف</th>
                         <th>التاريخ</th>
-                        <th>ساعات العمل</th>
-                        <th>الخصم (د)</th>
+                        <th>ساعات الشفت</th>
+                        <th>الخصم/البريك</th>
                         <th>المستحق اليومي</th>
-                        <th>الحالة</th>
+                        <th>نوع الإغلاق</th>
                         <th>حذف</th>
                     </tr>
                 </thead>
@@ -91,13 +108,12 @@
     </div>
 </div>
 
-<!-- مودال القفل -->
 <div id="pinModal" class="modal">
     <div class="modal-box">
-        <h3>رمز المدير</h3>
+        <h3 style="color:var(--maroon); margin-bottom:15px;">رمز دخول المدير</h3>
         <input type="password" id="pinInput" class="pin-field" maxlength="4">
-        <button onclick="checkPin()" style="width:100%; padding:10px; background:var(--maroon); color:white; border:none; border-radius:5px;">دخول</button>
-        <button onclick="closePin()" style="background:none; border:none; color:red; margin-top:10px;">إلغاء</button>
+        <button onclick="checkPin()" style="width:100%; padding:12px; background:var(--maroon); color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer;">دخول 🔓</button>
+        <button onclick="closePin()" style="background:none; border:none; color:#7f8c8d; margin-top:15px; cursor:pointer; font-weight:bold;">إلغاء</button>
     </div>
 </div>
 
@@ -107,110 +123,216 @@
     const db = firebase.database();
     const MASTER_PIN = "1234";
 
-    // تحميل الموظفين
+    let liveInterval = null; // متغير لتخزين العداد التلقائي
+
+    // 1. جلب قوائم الموظفين
     db.ref('staff').on('value', (snap) => {
         const data = snap.val();
         const selector = document.getElementById('staffSelector');
+        const savedValue = selector.value;
         selector.innerHTML = '<option value="">-- اختر اسمك من القائمة --</option>';
         if(data) {
             Object.keys(data).forEach(id => {
                 selector.innerHTML += `<option value="${id}">${data[id].name}</option>`;
             });
+            if(savedValue && data[savedValue]) { selector.value = savedValue; }
         }
     });
 
-    // تبديل الواجهة عند اختيار الموظف
+    // 2. مراقبة تبديل اسم الموظف وتحديث الواجهة والعداد
     document.getElementById('staffSelector').addEventListener('change', function() {
-        const id = this.value;
-        if(!id) return;
-        db.ref('staff/' + id).once('value', (s) => {
-            if(s.val().status === 'داخل') {
-                document.getElementById('checkInArea').style.display = 'none';
-                document.getElementById('checkOutArea').style.display = 'block';
-            } else {
-                document.getElementById('checkInArea').style.display = 'block';
-                document.getElementById('checkOutArea').style.display = 'none';
-            }
-        });
+        updateActionButtons(this.value);
     });
 
-    function performAction(type) {
+    function updateActionButtons(id) {
+        const area = document.getElementById('actionArea');
+        const timerBox = document.getElementById('timerBox');
+        
+        // إيقاف أي عداد قديم شغال لمنع تداخل الحسابات
+        if(liveInterval) clearInterval(liveInterval);
+        timerBox.style.display = 'none';
+
+        if(!id) { area.style.display = 'none'; return; }
+        
+        db.ref('staff/' + id).once('value', (s) => {
+            const staff = s.val();
+            area.style.display = 'flex';
+            
+            if(!staff.status || staff.status === 'خارج') {
+                area.innerHTML = `<button class="btn btn-in" onclick="performAction('دخول')">⏱️ تسجيل دخول (بدء الشفت)</button>`;
+            } 
+            else if(staff.status === 'داخل') {
+                area.innerHTML = `
+                    <button class="btn btn-break" onclick="performAction('بدء_بريك')">☕ خروج لبريك</button>
+                    <button class="btn btn-out" onclick="performAction('خروج_نهائي')">🏁 نهاية الشفت (إغلاق اليوم)</button>
+                `;
+                // تشغيل العداد الحي للشفت
+                startLiveTimer(staff.lastIn, staff.totalDeductions || 0, staff.salary, 'عمل');
+            } 
+            else if(staff.status === 'في_البريك') {
+                area.innerHTML = `<button class="btn btn-return" onclick="performAction('عودة_بريك')">🔄 العودة من البريك وتكملة العمل</button>`;
+                // تشغيل العداد لزمن البريك الحالي
+                startLiveTimer(staff.lastBreakStart, 0, 0, 'بريك');
+            }
+        });
+    }
+
+    // دالة تشغيل العداد التلقائي ثانية بثانية لتحديث الواجهة أمام الموظف
+    function startLiveTimer(startTime, deductionsMinutes, monthlySalary, mode) {
+        const timerBox = document.getElementById('timerBox');
+        const timerLabel = document.getElementById('timerLabel');
+        const liveClock = document.getElementById('liveClock');
+        const liveEarn = document.getElementById('liveEarn');
+        
+        timerBox.style.display = 'block';
+        
+        if(mode === 'بريك') {
+            timerLabel.innerText = "☕ مستغرق في البريك الحالي منذ:";
+            liveEarn.style.display = 'none';
+        } else {
+            timerLabel.innerText = "⏳ شفت العمل الفعلي مستمر منذ:";
+            liveEarn.style.display = 'block';
+        }
+
+        function refreshClock() {
+            const now = Date.now();
+            let diffMs = now - startTime;
+            
+            if(mode === 'عمل') {
+                // نخصم الدقائق المأخوذة في البريكات السابقة من الوقت الفعلي
+                diffMs = diffMs - (deductionsMinutes * 60 * 1000);
+            }
+            
+            if(diffMs < 0) diffMs = 0;
+
+            // تحويل الملي ثانية إلى ساعات ودقائق وثواني مصفوفة
+            let totalSeconds = Math.floor(diffMs / 1000);
+            let hrs = Math.floor(totalSeconds / 3600);
+            let mins = Math.floor((totalSeconds % 3600) / 60);
+            let secs = totalSeconds % 60;
+
+            liveClock.innerText = 
+                String(hrs).padStart(2, '0') + ":" + 
+                String(mins).padStart(2, '0') + ":" + 
+                String(secs).padStart(2, '0');
+
+            if(mode === 'عمل') {
+                const workingHours = (totalSeconds / 3600);
+                const hourlyRate = (monthlySalary || 0) / 30 / 10;
+                liveEarn.innerText = `المستحق المالي اللحظي: ${(workingHours * hourlyRate).toFixed(2)} ﷼`;
+            }
+        }
+
+        refreshClock();
+        liveInterval = setInterval(refreshClock, 1000);
+    }
+
+    // 3. معالجة الحركات الأساسية لقاعدة البيانات
+    function performAction(actionType) {
         const id = document.getElementById('staffSelector').value;
-        if(!id) return alert("اختر الاسم!");
+        if(!id) return alert("الرجاء اختيار الاسم أولاً!");
         
         const now = Date.now();
-        const timeStr = new Date().toLocaleTimeString('ar-SA');
+        const timeStr = new Date().toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'});
         
-        if(type === 'دخول') {
-            db.ref('staff/' + id).update({ status: 'داخل', lastIn: now });
-            showMsg("✅ تم تسجيل دخولك بنجاح " + timeStr, "green");
-            document.getElementById('checkInArea').style.display = 'none';
-            document.getElementById('checkOutArea').style.display = 'block';
-        } else {
-            const outType = document.getElementById('outType').value;
-            db.ref('staff/' + id).once('value', (s) => {
-                const staffData = s.val();
+        db.ref('staff/' + id).once('value', (s) => {
+            const staffData = s.val();
+            let updates = {};
+            
+            if(actionType === 'دخول') {
+                updates = { status: 'داخل', lastIn: now, totalDeductions: 0 };
+                db.ref('staff/' + id).update(updates).then(() => {
+                    showMsg(`✅ تم بدء الشفت بنجاح الساعة ${timeStr}`, "green");
+                    updateActionButtons(id);
+                });
+            } 
+            else if(actionType === 'بدء_بريك') {
+                updates = { status: 'في_البريك', lastBreakStart: now };
+                db.ref('staff/' + id).update(updates).then(() => {
+                    showMsg(`☕ تم تسجيل الخروج للبريك الساعة ${timeStr}`, "orange");
+                    updateActionButtons(id);
+                });
+            } 
+            else if(actionType === 'عودة_بريك') {
+                const breakDurationMinutes = Math.round((now - staffData.lastBreakStart) / (1000 * 60));
+                const oldDeductions = staffData.totalDeductions || 0;
+                
+                updates = { 
+                    status: 'داخل', 
+                    totalDeductions: oldDeductions + breakDurationMinutes 
+                };
+                db.ref('staff/' + id).update(updates).then(() => {
+                    showMsg(`🔄 أهلاً بعودتك! مدة البريك المحتسبة: ${breakDurationMinutes} دقيقة`, "blue");
+                    updateActionButtons(id);
+                });
+            } 
+            else if(actionType === 'خروج_نهائي') {
+                if(liveInterval) clearInterval(liveInterval);
                 const startTime = staffData.lastIn;
-                const endTime = now;
+                const totalDeductions = staffData.totalDeductions || 0;
                 
-                // حساب الساعات
-                let diffMs = endTime - startTime;
-                let deductionMinutes = 0;
+                let diffMs = now - startTime;
+                let workingMinutes = (diffMs / (1000 * 60)) - totalDeductions;
+                let workingHours = Math.max(0, (workingMinutes / 60)).toFixed(2);
                 
-                if(outType === 'بريك صلاة' || outType === 'بريك عشاء') deductionMinutes = 20;
-                
-                let workingMinutes = (diffMs / (1000 * 60)) - deductionMinutes;
-                let workingHours = (workingMinutes / 60).toFixed(2);
-                
-                // حساب الراتب (30 يوم، 10 ساعات شفت)
-                const monthlySalary = staffData.salary;
-                const hourlyRate = monthlySalary / 30 / 10;
+                const hourlyRate = (staffData.salary || 0) / 30 / 10;
                 const dailyEarn = (workingHours * hourlyRate).toFixed(2);
 
-                // حفظ التقرير
                 db.ref('daily_reports').push({
                     name: staffData.name,
                     date: new Date().toLocaleDateString('ar-SA'),
                     hours: workingHours,
-                    deduction: deductionMinutes,
+                    deduction: totalDeductions,
                     earn: dailyEarn,
-                    type: outType
+                    type: "نهاية الشفت"
                 });
 
-                db.ref('staff/' + id).update({ status: 'خارج' });
-                showMsg(`🏁 تم الخروج. العمل: ${workingHours} ساعة. المستحق: ${dailyEarn} ﷼`, "blue");
-                document.getElementById('checkInArea').style.display = 'block';
-                document.getElementById('checkOutArea').style.display = 'none';
-            });
-        }
+                db.ref('staff/' + id).update({ status: 'خارج', lastIn: null, totalDeductions: 0 }).then(() => {
+                    showMsg(`🏁 تم إنهاء اليوم الشفت: ${workingHours} ساعة. المستحق اليومي: ${dailyEarn} ﷼`, "var(--maroon)");
+                    updateActionButtons(id);
+                });
+            }
+        });
     }
 
     function showMsg(m, color) {
         const msg = document.getElementById('statusMsg');
         msg.style.color = color;
         msg.innerText = m;
-        setTimeout(() => { msg.innerText = ""; document.getElementById('staffSelector').value = ""; }, 5000);
+        setTimeout(() => { 
+            msg.innerText = ""; 
+            document.getElementById('staffSelector').value = ""; 
+            document.getElementById('timerBox').style.display = 'none';
+            document.getElementById('actionArea').style.display = 'none';
+        }, 6000);
     }
 
-    // إدارة وتقارير
-    function openPin() { document.getElementById('pinModal').style.display = 'flex'; }
-    function closePin() { document.getElementById('pinModal').style.display = 'none'; }
+    // 4. لوحة التحكم والمدير
+    function openPin() { document.getElementById('pinModal').style.display = 'flex'; document.getElementById('pinInput').focus(); }
+    function closePin() { document.getElementById('pinModal').style.display = 'none'; document.getElementById('pinInput').value = ''; }
+    
     function checkPin() {
         if(document.getElementById('pinInput').value === MASTER_PIN) {
             document.getElementById('adminArea').style.display = 'block';
             loadReports();
             closePin();
-        } else { alert("خطأ!"); }
-        document.getElementById('pinInput').value = '';
+            window.scrollTo({ top: document.getElementById('adminArea').offsetTop, behavior: 'smooth' });
+        } else { 
+            alert("رمز الحماية خاطئ!"); 
+            document.getElementById('pinInput').value = '';
+        }
     }
 
     function addStaff() {
-        const name = document.getElementById('newName').value;
-        const salary = document.getElementById('newSalary').value;
+        const name = document.getElementById('newName').value.trim();
+        const salary = parseFloat(document.getElementById('newSalary').value);
         if(name && salary) {
             db.ref('staff').push({ name, salary, status: 'خارج' });
             document.getElementById('newName').value = '';
             document.getElementById('newSalary').value = '';
+            alert(`تمت إضافة الموظف ${name} بنجاح!`);
+        } else {
+            alert("يرجى ملء الحقول المطلوبة بشكل صحيح.");
         }
     }
 
@@ -223,16 +345,25 @@
                 Object.keys(reports).reverse().forEach(key => {
                     const r = reports[key];
                     tbody.innerHTML += `<tr>
-                        <td>${r.name}</td>
+                        <td style="font-weight:bold;">${r.name}</td>
                         <td>${r.date}</td>
-                        <td>${r.hours}</td>
-                        <td>${r.deduction}</td>
-                        <td style="font-weight:bold; color:green;">${r.earn} ﷼</td>
-                        <td>${r.type}</td>
-                        <td><button onclick="deleteReport('${key}')" style="border:none; color:red; background:none;">🗑</button></td>
+                        <td>⏱️ ${r.hours} س</td>
+                        <td style="color:var(--red)">${r.deduction || 0} د</td>
+                        <td style="font-weight:bold; color:var(--green);">${r.earn} ﷼</td>
+                        <td><span style="background:#eee; padding:3px 8px; border-radius:5px; font-size:11px;">${r.type}</span></td>
+                        <td><button onclick="deleteReport('${key}')" style="border:none; color:var(--red); background:none; cursor:pointer; font-size:16px;">🗑</button></td>
                     </tr>`;
                 });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:grey;">لا توجد تقارير حضور مسجلة حتى الآن.</td></tr>';
             }
+        });
+    }
+
+    function deleteReport(key) { if(confirm("هل أنت متأكد من حذف هذا سجل نهائياً؟")) db.ref('daily_reports/' + key).remove(); }
+</script>
+</body>
+</html>
         });
     }
 
