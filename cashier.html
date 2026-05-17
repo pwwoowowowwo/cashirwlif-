@@ -73,18 +73,11 @@
         #mixedModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-body { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; }
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
-
-        #receipt-print { display: none; }
-        @media print {
-            body * { visibility: hidden; }
-            #receipt-print, #receipt-print * { visibility: visible; }
-            #receipt-print { display: block; position: absolute; left: 0; top: 0; width: 72mm; padding: 5px; direction: rtl; }
-        }
     </style>
 </head>
 <body>
 
-    <header class="no-print">
+    <header>
         <div class="nav-btns">
             <a href="index.html" class="nav-btn">🔙 خروج</a>
             <a href="inventory.html" class="nav-btn">📦 المخزن</a>
@@ -94,7 +87,7 @@
         <div style="width:40px"></div>
     </header>
 
-    <div class="main-layout no-print">
+    <div class="main-layout">
         <div class="menu-side">
             <div class="category-bar" id="categoryBar">
                 <button class="cat-btn active" onclick="changeCategory('tea', this)">شاي</button>
@@ -137,7 +130,7 @@
         </div>
     </div>
 
-    <div id="mixedModal" class="no-print">
+    <div id="mixedModal">
         <div class="modal-body">
             <h3 style="color:var(--maroon);">دفع مختلط</h3>
             <input type="number" id="cashInput" placeholder="المبلغ النقدي" oninput="calculateSplit()">
@@ -150,10 +143,7 @@
         </div>
     </div>
 
-    <div id="receipt-print"></div>
-
     <script>
-        // ... (نفس السكربت البرمجي الخاص بك للتعامل مع الفايربيز والسلة والطباعة)
         const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -250,7 +240,9 @@
             localStorage.setItem('shahi_offline_queue', JSON.stringify(queue));
 
             if(navigator.onLine) syncOfflineSales();
+            
             printReceipt(order);
+            
             cart = []; updateCart(); document.getElementById('customerPhone').value = "";
         }
 
@@ -279,18 +271,44 @@
 
         function closeModal() { document.getElementById('mixedModal').style.display = 'none'; }
 
+        // دالة الطباعة النصية المحدثة والمصلحة بالكامل
         function printReceipt(order) {
-            const printDiv = document.getElementById('receipt-print');
-            const itemsHtml = order.items.map(i => `<tr><td>${i.name} x${i.q}</td><td align="left">${i.totalItem}</td></tr>`).join('');
-            printDiv.innerHTML = `
-                <div style="text-align:center;"><h3>🌿 شاهي وليف</h3><p>فاتورة ضريبية مبسطة</p></div>
-                <hr>
-                <table style="width:100%; font-size:12px;"><tbody>${itemsHtml}</tbody></table>
-                <hr>
-                <div style="font-weight:bold;">الإجمالي: ${order.total} ريال</div>
-                <div style="font-size:10px;">شامل الضريبة: ${order.tax} ريال</div>
-            `;
-            setTimeout(() => { window.print(); }, 500);
+            let textReceipt = "";
+            textReceipt += "        🌿 شاهي وليف 🌿\n";
+            textReceipt += "     فاتورة ضريبية مبسطة\n";
+            textReceipt += "================================\n";
+            
+            order.items.forEach(item => {
+                textReceipt += `${item.name} x${item.q}\n`;
+                textReceipt += `                 السعر: ${item.totalItem} ﷼\n`;
+            });
+            
+            textReceipt += "================================\n";
+            textReceipt += `طريقة الدفع: ${order.method}\n`;
+            textReceipt += `رقم الجوال: ${order.phone}\n`;
+            textReceipt += `الضريبة: ${order.tax} ﷼\n`;
+            textReceipt += `الإجمالي الشامل: ${order.total} ﷼\n`;
+            textReceipt += "================================\n";
+            textReceipt += "       شكراً لزيارتكم و ياهلا \n\n\n\n"; 
+
+            // محاولة الإرسال لتطبيق الطباعة عبر الـ WebSocket المحلي
+            const socket = new WebSocket('ws://127.0.0.1:8080'); 
+
+            socket.onopen = function() {
+                socket.send(textReceipt);
+                socket.close();
+                console.log("تمت عملية الطباعة النصية بنجاح");
+            };
+
+            socket.onerror = function(err) {
+                // إذا لم يعمل الـ WebSocket وتستخدم Fully Kiosk مع إعدادات الطباعة الصامتة
+                if (typeof FullyKiosk !== "undefined") {
+                    window.print();
+                } else {
+                    console.log("تنبيه: تأكد من تشغيل خدمة الطباعة أو استخدام متصفح يدعم الطباعة الصامتة.");
+                    window.print(); 
+                }
+            };
         }
     </script>
 </body>
