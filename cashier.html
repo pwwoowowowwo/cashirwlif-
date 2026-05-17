@@ -226,12 +226,16 @@
         }
 
         async function processOrder(method, details) {
+            // توليد كود فاتورة متسلسل فريد هنا قبل الحفظ البرمجي لعدم التكرار
+            const generatedInvoiceCode = "INV-" + Math.floor(Date.now() / 1000);
+
             const order = {
+                invoiceId: generatedInvoiceCode,
                 items: cart.map(i => ({ name: i.name, q: i.qty, price: i.price, totalItem: (i.qty * i.price).toFixed(2) })),
                 total: document.getElementById('grandTotal').innerText,
                 tax: document.getElementById('taxAmount').innerText,
                 method, paymentDetails: details,
-                phone: document.getElementById('customerPhone').value || "عميل محلي",
+                phone: document.getElementById('customerPhone').value || "عميل سفري",
                 timestamp: Date.now()
             };
 
@@ -241,9 +245,12 @@
 
             if(navigator.onLine) syncOfflineSales();
             
-            printReceipt(order);
+            // تم إلغاء استدعاء وظيفة printReceipt() المحلية التي كانت تفتح طباعة الشاشة القديمة
+            console.log("تم ترحيل الطلب سحابياً بنجاح ومحرك الفواتير سيتولى طباعته الآن.");
             
-            cart = []; updateCart(); document.getElementById('customerPhone').value = "";
+            cart = []; 
+            updateCart(); 
+            document.getElementById('customerPhone').value = "";
         }
 
         async function syncOfflineSales() {
@@ -270,46 +277,9 @@
         }
 
         function closeModal() { document.getElementById('mixedModal').style.display = 'none'; }
-
-        // دالة الطباعة النصية المحدثة والمصلحة بالكامل
-        function printReceipt(order) {
-            let textReceipt = "";
-            textReceipt += "        🌿 شاهي وليف 🌿\n";
-            textReceipt += "     فاتورة ضريبية مبسطة\n";
-            textReceipt += "================================\n";
-            
-            order.items.forEach(item => {
-                textReceipt += `${item.name} x${item.q}\n`;
-                textReceipt += `                 السعر: ${item.totalItem} ﷼\n`;
-            });
-            
-            textReceipt += "================================\n";
-            textReceipt += `طريقة الدفع: ${order.method}\n`;
-            textReceipt += `رقم الجوال: ${order.phone}\n`;
-            textReceipt += `الضريبة: ${order.tax} ﷼\n`;
-            textReceipt += `الإجمالي الشامل: ${order.total} ﷼\n`;
-            textReceipt += "================================\n";
-            textReceipt += "       شكراً لزيارتكم و ياهلا \n\n\n\n"; 
-
-            // محاولة الإرسال لتطبيق الطباعة عبر الـ WebSocket المحلي
-            const socket = new WebSocket('ws://127.0.0.1:8080'); 
-
-            socket.onopen = function() {
-                socket.send(textReceipt);
-                socket.close();
-                console.log("تمت عملية الطباعة النصية بنجاح");
-            };
-
-            socket.onerror = function(err) {
-                // إذا لم يعمل الـ WebSocket وتستخدم Fully Kiosk مع إعدادات الطباعة الصامتة
-                if (typeof FullyKiosk !== "undefined") {
-                    window.print();
-                } else {
-                    console.log("تنبيه: تأكد من تشغيل خدمة الطباعة أو استخدام متصفح يدعم الطباعة الصامتة.");
-                    window.print(); 
-                }
-            };
-        }
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
