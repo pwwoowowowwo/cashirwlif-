@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف - التصميم المطور القصير</title>
+    <title>كاشير شاهي وليف - المحرك المطور المعتمد</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -73,50 +73,48 @@
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
 
         /* ======================================================= */
-        /* 🖨️ إعدادات المحرك المطور الفاخر - المقاس الملموم والقصير */
+        /* 🖨️ تنسيقات الطباعة المحدثة والمطابقة للمحرك المطور الفخم  */
         /* ======================================================= */
-        #hiddenPrintArea { display: none; }
+        #printArea { display: none; }
 
         @media print {
             @page { size: 80mm auto; margin: 0mm; }
             body * { display: none !important; } 
-            #hiddenPrintArea, #hiddenPrintArea * { display: block !important; } 
-            #hiddenPrintArea { 
+            #printArea, #printArea * { display: block !important; } 
+            #printArea .p-row, #printArea .p-table-header, #printArea .p-table-row { display: flex !important; }
+            
+            #printArea { 
                 background: white !important; 
                 width: 72mm; 
-                padding: 2mm 1mm 4mm 1mm; /* تقليص الهوامش لتقصير الفاتورة */
+                padding: 1mm 1mm 3mm 1mm; 
                 box-sizing: border-box; 
                 direction: rtl;
                 color: #000 !important;
             }
             
-            /* الهيدر المطور الملموم */
-            .p-header { text-align: center; margin-bottom: 2px; }
-            .p-title { font-size: 16px; font-weight: bold; color: #000; margin-bottom: 2px; }
-            .p-subtitle { font-size: 10px; font-weight: normal; line-height: 1.3; color: #000; }
+            .receipt-header { text-align: center; margin-bottom: 2px; }
+            .receipt-title { font-size: 16px; font-weight: bold; color: #000; margin-bottom: 2px; }
             
-            /* خطوط منقطة رفيعة جداً لتقليص المساحة الرأسية */
+            /* الخطوط المنقطة المدمجة لتوفير الورق */
             .p-divider { border-top: 1px dotted #000 !important; margin: 4px 0; height: 0; width: 100%; }
             
-            /* تفاصيل الطلب */
-            .p-row { display: flex; justify-content: space-between; font-size: 10.5px; margin: 2px 0; color: #000; }
+            /* صفوف البيانات المتناسقة أفقياً */
+            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; font-weight: bold; color: #000; }
             
-            /* هندسة الجدول المطور - منع التكسير وسطر واحد مستقيم */
-            .p-table { width: 100%; border-collapse: collapse; margin: 2px 0; table-layout: fixed; }
-            .p-table th { font-size: 11px; font-weight: bold; color: #000; padding-bottom: 2px; border-bottom: none; }
-            .p-table td { font-size: 11px; font-weight: bold; color: #000; padding: 3px 0; vertical-align: middle; white-space: nowrap; }
+            /* ترويسة وأسطر جدول الأصناف المطور (منع التكسير) */
+            .p-table-header { font-weight: bold; border-bottom: none; padding-bottom: 2px; }
+            .p-table-row { padding: 3px 0; vertical-align: middle; }
             
-            /* التوزيع الأفقي الدقيق لمنع النزول لسطر جديد */
-            .col-name { text-align: right; width: 50%; overflow: hidden; text-overflow: ellipsis; }
-            .col-qty { text-align: center; width: 20%; }
-            .col-total { text-align: left; width: 30%; }
+            /* توزيع مساحات الأعمدة بالملي لضمان بقائها في سطر واحد */
+            .col-name { text-align: right; width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .col-qty { text-align: center; width: 20%; white-space: nowrap; }
+            .col-total { text-align: left; width: 30%; white-space: nowrap; }
 
-            /* قسم الحسابات الضريبية */
-            .p-total-section { margin-top: 2px; }
-            .p-grand-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #000; margin-top: 2px; padding: 1px 0; }
+            /* حسابات الإجمالي */
+            .total-section { margin-top: 2px; }
+            .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; margin-top: 2px; padding: 1px 0; }
             
-            /* التذييل القصير */
-            .p-footer { text-align: center; font-size: 9.5px; color: #000; margin-top: 4px; line-height: 1.3; }
+            .footer { text-align: center; font-size: 10px; color: #000; margin-top: 5px; line-height: 1.3; }
         }
     </style>
 </head>
@@ -188,47 +186,46 @@
         </div>
     </div>
 
-    <div id="hiddenPrintArea">
-        <div class="p-header">
-            <div class="p-title" id="p_Title">🌿 شاهي وليف</div>
-            <div id="p_Header" class="p-subtitle"></div>
+    <div id="printArea">
+        <div class="receipt-header">
+            <div class="receipt-title" id="dispTitle">🌿 شاهي وليف</div>
+            <div id="dispHeader" style="white-space: pre-line; font-size: 10px; font-weight: normal; line-height: 1.4;"></div>
+        </div>
+
+        <div class="p-divider"></div>
+        <div id="orderInfo"></div>
+        <div class="p-divider"></div>
+
+        <div class="p-row p-table-header">
+            <div class="col-name">الصنف</div>
+            <div class="col-qty">العدد</div>
+            <div class="col-total">المجموع</div>
         </div>
         
+        <div id="itemsList"></div>
+
         <div class="p-divider"></div>
-        <div id="p_OrderInfo"></div>
-        <div class="p-divider"></div>
-        
-        <table class="p-table">
-            <thead>
-                <tr>
-                    <th class="col-name">الصنف</th>
-                    <th class="col-qty">العدد</th>
-                    <th class="col-total">المجموع</th>
-                </tr>
-            </thead>
-            <tbody id="p_ItemsList"></tbody>
-        </table>
-        
-        <div class="p-divider"></div>
-        
-        <div class="p-total-section">
-            <div id="p_TaxCalculation"></div>
-            <div class="p-grand-row">
+
+        <div class="total-section">
+            <div id="taxCalculation"></div>
+            <div class="p-divider" style="margin: 3px 0;"></div>
+            <div class="total-row">
                 <span>الإجمالي الشامل:</span>
-                <span id="p_GrandTotal">0.00 ﷼</span>
+                <span id="grandTotalMuted">0.00 ﷼</span>
             </div>
-            <div id="p_PaymentDetails" style="font-size: 10.5px; margin-top: 2px;"></div>
+            <div id="paymentDetails" style="font-size: 10.5px; margin-top: 3px; font-weight: bold;"></div>
         </div>
-        
+
         <div class="p-divider"></div>
-        
-        <div class="p-footer">
-            <div id="p_Footer"></div>
-            <div style="font-size: 8.5px; margin-top: 4px; font-weight: normal; opacity: 0.7;">نظام شاهي وليف السحابي الموحد</div>
+
+        <div class="footer">
+            <div id="dispFooter" style="white-space: pre-line; font-weight: bold; font-size: 9.5px;"></div>
+            <div style="margin-top: 4px; font-weight: bold; font-size: 8.5px; opacity: 0.7;">نظام شاهي وليف السحابي الموحد</div>
         </div>
     </div>
 
     <script>
+        // إعدادات قواعد البيانات وقائمة السلة والتشغيل المباشر
         const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -329,6 +326,7 @@
 
             if(navigator.onLine) syncOfflineSales();
             
+            // استدعاء محرك الطباعة المطور المدمج لطباعة الفاتورة القصيرة
             directPrintReceipt(order);
             
             cart = []; 
@@ -336,36 +334,37 @@
             document.getElementById('customerPhone').value = "";
         }
 
+        // ⚡ هندسة معالجة تعبئة الفاتورة بالتنسيق المطور الملموم لمنع الهدر
         function directPrintReceipt(order) {
             const savedSettings = JSON.parse(localStorage.getItem('receiptSettings')) || {
                 title: "🌿 شاهي وليف",
-                header: "الالرقم الضريبي: 7008227030 \nالفرع: الرئيسي \nالعنوان: المدينة المنورة - ورقان",
+                header: "الرقم الضريبي: 7008227030 \nالفرع: الرئيسي \nالعنوان: المدينة المنورة - ورقان",
                 footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🌱 \nيسعدنا تقديم أفضل شاهي ومخبوزات لكم 🌿"
             };
 
-            document.getElementById('p_Title').innerText = savedSettings.title;
-            document.getElementById('p_Header').innerText = savedSettings.header;
-            document.getElementById('p_Footer').innerText = savedSettings.footer;
+            document.getElementById('dispTitle').innerText = savedSettings.title;
+            document.getElementById('dispHeader').innerText = savedSettings.header;
+            document.getElementById('dispFooter').innerText = savedSettings.footer;
 
             const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
             let totalQty = 0;
 
-            document.getElementById('p_OrderInfo').innerHTML = `
+            document.getElementById('orderInfo').innerHTML = `
                 <div class="p-row"><span>رقم الفاتورة:</span> <span>${order.invoiceId}</span></div>
                 <div class="p-row"><span>التاريخ والوقت:</span> <span>${orderDate}</span></div>
                 <div class="p-row"><span>رقم العميل:</span> <span>${order.phone}</span></div>
             `;
 
-            document.getElementById('p_ItemsList').innerHTML = order.items.map(item => {
+            // بناء قائمة الأصناف باستخدام الـ Divs المانعة للتكسر أفقياً ومطابقة للتصميم الجديد
+            document.getElementById('itemsList').innerHTML = order.items.map(item => {
                 const qty = parseInt(item.q || 1);
                 totalQty += qty;
-                const itemTotal = parseFloat(item.totalItem);
                 return `
-                    <tr>
-                        <td class="col-name">${item.name}</td>
-                        <td class="col-qty">${qty}</td>
-                        <td class="col-total">${itemTotal.toFixed(2)} ﷼</td>
-                    </tr>
+                    <div class="p-row p-table-row">
+                        <div class="col-name">${item.name}</div>
+                        <div class="col-qty">${qty}</div>
+                        <div class="col-total">${parseFloat(item.totalItem).toFixed(2)} ﷼</div>
+                    </div>
                 `;
             }).join('');
 
@@ -373,13 +372,13 @@
             const taxVal = parseFloat(order.tax || 0).toFixed(2);
             const netVal = (grandTotalVal - taxVal).toFixed(2);
 
-            document.getElementById('p_TaxCalculation').innerHTML = `
+            document.getElementById('taxCalculation').innerHTML = `
                 <div class="p-row"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
                 <div class="p-row"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
                 <div class="p-row"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
             `;
 
-            document.getElementById('p_GrandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
+            document.getElementById('grandTotalMuted').innerText = grandTotalVal.toFixed(2) + " ﷼";
 
             let paymentMethodText = `طريقة الدفع: ${order.method}`;
             if (order.paymentDetails) {
@@ -388,8 +387,9 @@
                 if(parseFloat(order.paymentDetails.card) > 0) details.push(`شبكة: ${parseFloat(order.paymentDetails.card).toFixed(2)} ﷼`);
                 if(details.length > 0) paymentMethodText += ` (${details.join(' + ')})`;
             }
-            document.getElementById('p_PaymentDetails').innerText = paymentMethodText;
+            document.getElementById('paymentDetails').innerText = paymentMethodText;
 
+            // أمر استدعاء نافذة الطباعة الحرارية بعد التحميل اللحظي
             setTimeout(() => {
                 window.print();
             }, 250);
