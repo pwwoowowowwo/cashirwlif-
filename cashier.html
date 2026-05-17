@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف - المحرك المطور المعتمد</title>
+    <title>كاشير شاي وليف - المحرك المطور المعتمد</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -126,7 +126,7 @@
             <a href="inventory.html" class="nav-btn">📦 المخزن</a>
             <a href="sales.html" class="nav-btn">📊 السجل</a>
         </div>
-        <h2><span id="netStatus" class="status-dot online"></span> 🌿 شاهي وليف</h2>
+        <h2><span id="netStatus" class="status-dot online"></span> 🌿 شاي وليف</h2>
         <div style="width:40px"></div>
     </header>
 
@@ -373,7 +373,7 @@
             const netVal = (grandTotalVal - taxVal).toFixed(2);
 
             document.getElementById('taxCalculation').innerHTML = `
-                <div class="p-row"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
+                <div class="p-row"><span>إجمالي عدد الاصناف:</span> <span>${totalQty} حبة</span></div>
                 <div class="p-row"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
                 <div class="p-row"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
             `;
