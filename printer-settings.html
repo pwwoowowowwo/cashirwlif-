@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات الفاتورة والطابعة - شاهي وليف</title>
+    <style>
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); padding: 20px; display: flex; justify-content: center; align-items: start; min-height: 100vh; }
+        .settings-card { background: white; padding: 30px; border-radius: 20px; border: 2px solid var(--gold); width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: var(--maroon); text-align: center; margin-bottom: 20px; }
+        h3 { color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin: 20px 0 10px 0; font-size: 16px; }
+        .form-group { text-align: right; margin-bottom: 12px; }
+        label { font-weight: bold; color: #666; display: block; margin-bottom: 5px; font-size: 14px; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 15px; }
+        input:focus, textarea:focus { border-color: var(--maroon); outline: none; }
+        .btn-save { width: 100%; background: var(--maroon); color: white; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 15px; }
+        .btn-back { display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none; font-size: 14px; font-weight: bold; }
+        .status-msg { text-align: center; margin-top: 12px; font-weight: bold; font-size: 14px; }
+        .printer-status { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 15px; font-weight: bold; border: 1px solid #eee; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="settings-card">
+        <h2>⚙️ إعدادات الفاتورة والطابعة</h2>
+        
+        <h3>🖨️ فحص اتصال الطابعة الحرارية</h3>
+        <div class="printer-status">
+            <span id="statusDot" class="dot"></span>
+            <span id="statusText">جاري فحص الاتصال بالطابعة...</span>
+        </div>
+
+        <div class="form-group">
+            <label>عنوان IP الطابعة الإستاتيكي:</label>
+            <input type="text" id="printerIpInput" placeholder="مثال: 192.168.1.150" style="direction: ltr; text-align: center;">
+        </div>
+
+        <div class="form-group">
+            <label>رقم منفذ التطبيق الوسيط (WebSocket Port):</label>
+            <input type="number" id="printerPortInput" placeholder="الافتراضي: 8080" style="direction: ltr; text-align: center;">
+        </div>
+
+        <h3>📄 بيانات وتفاصيل الفاتورة المطبوعة</h3>
+        <div class="form-group">
+            <label>اسم المتجر النشط:</label>
+            <input type="text" id="shopNameInput" placeholder="مثال: 🌿 شاهي وليف">
+        </div>
+        <div class="form-group">
+            <label>العنوان والفرع الرسمي:</label>
+            <input type="text" id="shopAddressInput" placeholder="مثال: المدينة المنورة - الفرع الرئيسي">
+        </div>
+        <div class="form-group">
+            <label>الرقم الضريبي للمنشأة:</label>
+            <input type="text" id="shopTaxInput" placeholder="مثال: 300xxxxxxxxxxxx">
+        </div>
+        <div class="form-group">
+            <label>الرسالة الترحيبية (أسفل الفاتورة):</label>
+            <textarea id="shopFooterInput" rows="2" placeholder="مثال: شكراً لزيارتكم و ياهلا"></textarea>
+        </div>
+
+        <button class="btn-save" onclick="saveAllSettings()">💾 حفظ وإعتماد كل الإعدادات</button>
+        
+        <div id="statusMsg" class="status-msg"></div>
+
+        <a href="cashier.html" class="btn-back">🔙 العودة إلى شاشة الكاشير الرئيسية</a>
+    </div>
+
+    <script>
+        // تشغيل الفحص التلقائي وجلب البيانات المحفوظة بمجرد فتح الصفحة
+        document.body.onload = function() {
+            document.getElementById('printerIpInput').value = localStorage.getItem('printer_ip') || '';
+            document.getElementById('printerPortInput').value = localStorage.getItem('printer_port') || '8080';
+            document.getElementById('shopNameInput').value = localStorage.getItem('shop_name') || '🌿 شاهي وليف';
+            document.getElementById('shopAddressInput').value = localStorage.getItem('shop_address') || '';
+            document.getElementById('shopTaxInput').value = localStorage.getItem('shop_tax') || '';
+            document.getElementById('shopFooterInput').value = localStorage.getItem('shop_footer') || 'شكراً لزيارتكم و ياهلا';
+            
+            checkPrinterConnection();
+        };
+
+        // دالة الاتصال اللحظي بالتطبيق الوسيط للتأكد من جاهزيته
+        function checkPrinterConnection() {
+            const port = localStorage.getItem('printer_port') || '8080';
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            // محاولة فتح جسر اتصال سريع مع الخدمة المحلية بالتابلت
+            const socket = new WebSocket(`ws://127.0.0.1:${port}`);
+            
+            socket.onopen = function() {
+                dot.style.background = '#2ecc71';
+                dot.style.boxShadow = '0 0 8px #2ecc71';
+                text.innerText = 'الطابعة متصلة وجاهزة للطباعة الصامتة ✔️';
+                text.style.color = '#2e7d32';
+                socket.close();
+            };
+            
+            socket.onerror = function() {
+                dot.style.background = '#e74c3c';
+                dot.style.boxShadow = '0 0 8px #e74c3c';
+                text.innerText = 'الطابعة غير متصلة! يرجى تشغيل التطبيق الوسيط ✖️';
+                text.style.color = '#c62828';
+            };
+        }
+
+        // دالة كتابة البيانات في الـ localStorage لتعميمها على الكاشير والسجل
+        function saveAllSettings() {
+            const ip = document.getElementById('printerIpInput').value.trim();
+            const port = document.getElementById('printerPortInput').value.trim();
+            const name = document.getElementById('shopNameInput').value.trim();
+            const address = document.getElementById('shopAddressInput').value.trim();
+            const tax = document.getElementById('shopTaxInput').value.trim();
+            const footer = document.getElementById('shopFooterInput').value.trim();
+            const msg = document.getElementById('statusMsg');
+
+            if(!ip || !port || !name) {
+                msg.style.color = '#c62828';
+                msg.innerText = '⚠️ خطأ: يرجى كتابة الـ IP والمنفذ واسم المتجر على الأقل لإتمام الحفظ!';
+                return;
+            }
+
+            // تخزين البيانات
+            localStorage.setItem('printer_ip', ip);
+            localStorage.setItem('printer_port', port);
+            localStorage.setItem('shop_name', name);
+            localStorage.setItem('shop_address', address);
+            localStorage.setItem('shop_tax', tax);
+            localStorage.setItem('shop_footer', footer);
+
+            msg.style.color = '#2e7d32';
+            msg.innerText = '✅ تم حفظ واعتماد التحديثات بنجاح ومزامنتها بالفواتير!';
+            
+            // تحديث فحص الاتصال بعد تعديل المنفذ
+            checkPrinterConnection();
+        }
+    </script>
+</body>
+</html>
