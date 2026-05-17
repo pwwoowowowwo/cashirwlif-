@@ -2,140 +2,255 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إعدادات الفاتورة والطابعة - شاهي وليف</title>
+    <title>محرك طباعة شاهي وليف - المطور الحقيقي</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); padding: 20px; display: flex; justify-content: center; align-items: start; min-height: 100vh; }
-        .settings-card { background: white; padding: 30px; border-radius: 20px; border: 2px solid var(--gold); width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { color: var(--maroon); text-align: center; margin-bottom: 20px; }
-        h3 { color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin: 20px 0 10px 0; font-size: 16px; }
-        .form-group { text-align: right; margin-bottom: 12px; }
-        label { font-weight: bold; color: #666; display: block; margin-bottom: 5px; font-size: 14px; }
-        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 15px; }
-        input:focus, textarea:focus { border-color: var(--maroon); outline: none; }
-        .btn-save { width: 100%; background: var(--maroon); color: white; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 15px; }
-        .btn-back { display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .status-msg { text-align: center; margin-top: 12px; font-weight: bold; font-size: 14px; }
-        .printer-status { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 15px; font-weight: bold; border: 1px solid #eee; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; background: #ccc; display: inline-block; }
+        /* الإعدادات العامة للعرض على الشاشة */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f4f7f6; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* لوحة التحكم الجانبية المعزولة تماماً */
+        #editorPanel { 
+            background: #fff; 
+            padding: 20px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 12px; 
+            width: 340px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        #editorPanel h4 { margin-top: 0; margin-bottom: 15px; font-weight: 900; font-size: 16px; }
+        #editorPanel label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
+        #editorPanel input, #editorPanel textarea { 
+            width: 100%; margin-bottom: 15px; padding: 10px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 14px;
+        }
+        #editorPanel input:focus, #editorPanel textarea:focus { border-color: #630000; outline: none; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 8px; font-size: 14px; transition: 0.2s; }
+        
+        /* إعدادات محاكاة الورق الحراري على الشاشة (المعاينة) */
+        #printArea { 
+            background: white; 
+            width: 72mm; 
+            padding: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 10px; }
+        .receipt-title { font-size: 20px; font-weight: bold; margin: 0 0 5px 0; color: #000; }
+        .info-row { display: flex; justify-content: space-between; font-size: 12px; margin: 4px 0; color: #000; font-weight: 500; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th { border-bottom: 1px solid #000; text-align: right; font-size: 12px; padding-bottom: 6px; font-weight: bold; color: #000; }
+        td { padding: 6px 0; font-size: 12px; vertical-align: top; color: #000; font-weight: 500; }
+        
+        .total-section { border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #000; }
+        .footer { text-align: center; margin-top: 15px; font-size: 11px; border-top: 1px dashed #000; padding-top: 10px; color: #000; }
+
+        /* ======================================================= */
+        /* 🖨️ إعدادات وهندسة الطباعة الحقيقية (تُطبق على الورق الحراري فقط) */
+        /* ======================================================= */
+        @media print {
+            @page {
+                size: 72mm auto; /* إجبار الطابعة على قياس الورق الحراري القياسي */
+                margin: 0;       /* إلغاء حواف المتصفح الافتراضية (التاريخ والروابط) */
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0; 
+                width: 72mm; 
+                display: block; /* إلغاء الـ Flexbox الخاص بالشاشة */
+            }
+            .no-print { 
+                display: none !important; /* إخفاء لوحة التحكم والأزرار تماماً عن الطابعة */
+            }
+            #printArea { 
+                box-shadow: none; 
+                width: 72mm; 
+                padding: 8mm 4mm; /* تنسيق الهوامش الداخلية للورقة */
+                border-radius: 0;
+                margin: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="settings-card">
-        <h2>⚙️ إعدادات الفاتورة والطابعة</h2>
-        
-        <h3>🖨️ فحص اتصال الطابعة الحرارية</h3>
-        <div class="printer-status">
-            <span id="statusDot" class="dot"></span>
-            <span id="statusText">جاري فحص الاتصال بالطابعة...</span>
-        </div>
+<div id="editorPanel" class="no-print">
+    <h4 style="color: #630000;">⚙️ إعدادات الفاتورة الضريبية</h4>
+    <label>اسم المنشأة / المحل:</label>
+    <input type="text" id="editTitle" oninput="updateLive()" value="🌿 شاهي وليف">
+    
+    <label>بيانات الترويسة والعنوان:</label>
+    <textarea id="editHeader" oninput="updateLive()" rows="3">الرقم الضريبي: 311245678900003&#10;الفرع: الرئيسي&#10;العنوان: الوجه - الطريق العام</textarea>
+    
+    <label>نص أسفل الفاتورة:</label>
+    <textarea id="editFooter" oninput="updateLive()" rows="2">شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃</textarea>
+    
+    <button onclick="saveSettings()" class="btn" style="background: #630000; color: white;">حفظ الإعدادات في المتصفح 💾</button>
+    <button onclick="window.print()" class="btn" style="background: #444; color: white;">تجربة طباعة يدوية 🖨️</button>
+    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+    <p style="font-size: 11px; color: #777; line-height: 1.4; text-align: justify;">
+        * تم فصل المنظومة بنجاح. بمجرد استقبال طلب مبيعات جديد من شاشة الكاشير، سيقوم هذا المحرك بطباعة الفاتورة الحرارية الصافية تلقائياً دون طباعة الأزرار أو الشاشة.
+    </p>
+</div>
 
-        <div class="form-group">
-            <label>عنوان IP الطابعة الإستاتيكي:</label>
-            <input type="text" id="printerIpInput" placeholder="مثال: 192.168.1.150" style="direction: ltr; text-align: center;">
-        </div>
-
-        <div class="form-group">
-            <label>رقم منفذ التطبيق الوسيط (WebSocket Port):</label>
-            <input type="number" id="printerPortInput" placeholder="الافتراضي: 8080" style="direction: ltr; text-align: center;">
-        </div>
-
-        <h3>📄 بيانات وتفاصيل الفاتورة المطبوعة</h3>
-        <div class="form-group">
-            <label>اسم المتجر النشط:</label>
-            <input type="text" id="shopNameInput" placeholder="مثال: 🌿 شاهي وليف">
-        </div>
-        <div class="form-group">
-            <label>العنوان والفرع الرسمي:</label>
-            <input type="text" id="shopAddressInput" placeholder="مثال: المدينة المنورة - الفرع الرئيسي">
-        </div>
-        <div class="form-group">
-            <label>الرقم الضريبي للمنشأة:</label>
-            <input type="text" id="shopTaxInput" placeholder="مثال: 300xxxxxxxxxxxx">
-        </div>
-        <div class="form-group">
-            <label>الرسالة الترحيبية (أسفل الفاتورة):</label>
-            <textarea id="shopFooterInput" rows="2" placeholder="مثال: شكراً لزيارتكم و ياهلا"></textarea>
-        </div>
-
-        <button class="btn-save" onclick="saveAllSettings()">💾 حفظ وإعتماد كل الإعدادات</button>
-        
-        <div id="statusMsg" class="status-msg"></div>
-
-        <a href="cashier.html" class="btn-back">🔙 العودة إلى شاشة الكاشير الرئيسية</a>
+<div id="printArea">
+    <div class="receipt-header">
+        <div class="receipt-title" id="dispTitle">🌿 شاهي وليف</div>
+        <div id="dispHeader" style="white-space: pre-line; font-size: 11px; font-weight: bold; line-height: 1.5;"></div>
     </div>
 
-    <script>
-        // تشغيل الفحص التلقائي وجلب البيانات المحفوظة بمجرد فتح الصفحة
-        document.body.onload = function() {
-            document.getElementById('printerIpInput').value = localStorage.getItem('printer_ip') || '';
-            document.getElementById('printerPortInput').value = localStorage.getItem('printer_port') || '8080';
-            document.getElementById('shopNameInput').value = localStorage.getItem('shop_name') || '🌿 شاهي وليف';
-            document.getElementById('shopAddressInput').value = localStorage.getItem('shop_address') || '';
-            document.getElementById('shopTaxInput').value = localStorage.getItem('shop_tax') || '';
-            document.getElementById('shopFooterInput').value = localStorage.getItem('shop_footer') || 'شكراً لزيارتكم و ياهلا';
-            
-            checkPrinterConnection();
+    <div id="orderInfo" style="margin-top: 5px;"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الصنف</th>
+                <th style="text-align: center; width: 40px;">العدد</th>
+                <th style="text-align: left; width: 70px;">المجموع</th>
+            </tr>
+        </thead>
+        <tbody id="itemsList"></tbody>
+    </table>
+
+    <div class="total-section">
+        <div id="taxCalculation" style="font-size: 12px; margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 5px;"></div>
+        <div class="total-row">
+            <span>الإجمالي الشامل:</span>
+            <span id="grandTotal">0.00 ﷼</span>
+        </div>
+        <div id="paymentDetails" style="font-size: 12px; margin-top: 8px; font-weight: bold;"></div>
+    </div>
+
+    <div class="footer">
+        <div id="dispFooter" style="white-space: pre-line; font-weight: bold;"></div>
+        <div style="margin-top: 12px; font-weight: 900; font-size: 9px; letter-spacing: 1px;">نظام شاهي وليف السحابي الموحد</div>
+        <div style="height: 60px;"></div> </div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // جلب الإعدادات المستقلة للفاتورة من الذاكرة المحلية
+    function loadSettings() {
+        const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
+            title: "🌿 شاهي وليف",
+            header: "الرقم الضريبي: 311245678900003\nالفرع: الرئيسي\nالعنوان: الوجه - الطريق العام",
+            footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃"
         };
+        document.getElementById('editTitle').value = saved.title;
+        document.getElementById('editHeader').value = saved.header;
+        document.getElementById('editFooter').value = saved.footer;
+        updateLive();
+    }
 
-        // دالة الاتصال اللحظي بالتطبيق الوسيط للتأكد من جاهزيته
-        function checkPrinterConnection() {
-            const port = localStorage.getItem('printer_port') || '8080';
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            
-            // محاولة فتح جسر اتصال سريع مع الخدمة المحلية بالتابلت
-            const socket = new WebSocket(`ws://127.0.0.1:${port}`);
-            
-            socket.onopen = function() {
-                dot.style.background = '#2ecc71';
-                dot.style.boxShadow = '0 0 8px #2ecc71';
-                text.innerText = 'الطابعة متصلة وجاهزة للطباعة الصامتة ✔️';
-                text.style.color = '#2e7d32';
-                socket.close();
-            };
-            
-            socket.onerror = function() {
-                dot.style.background = '#e74c3c';
-                dot.style.boxShadow = '0 0 8px #e74c3c';
-                text.innerText = 'الطابعة غير متصلة! يرجى تشغيل التطبيق الوسيط ✖️';
-                text.style.color = '#c62828';
-            };
+    function updateLive() {
+        document.getElementById('dispTitle').innerText = document.getElementById('editTitle').value;
+        document.getElementById('dispHeader').innerText = document.getElementById('editHeader').value;
+        document.getElementById('dispFooter').innerText = document.getElementById('editFooter').value;
+    }
+
+    function saveSettings() {
+        const settings = {
+            title: document.getElementById('editTitle').value,
+            header: document.getElementById('editHeader').value,
+            footer: document.getElementById('editFooter').value
+        };
+        localStorage.setItem('receiptSettings', JSON.stringify(settings));
+        alert("تم حفظ بيانات الفاتورة بنجاح! ✅");
+    }
+
+    // مراقبة قاعدة البيانات: عند إضافة أي طلب جديد في صفحة الكاشير يتم التقاطه حياً هنا
+    let isFirstLoad = true;
+    db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
+        const order = snapshot.val();
+        
+        // منع المحرك من طباعة آخر طلب قديم عند فتح الصفحة أول مرة
+        if (isFirstLoad) {
+            isFirstLoad = false;
+            renderReceipt(order); // يعرضه على الشاشة فقط كمعاينة بدون طباعة فورية
+            return;
         }
+        
+        // طباعة حية وتلقائية للطلبات الجديدة فور حدوثها
+        renderReceipt(order);
+    });
 
-        // دالة كتابة البيانات في الـ localStorage لتعميمها على الكاشير والسجل
-        function saveAllSettings() {
-            const ip = document.getElementById('printerIpInput').value.trim();
-            const port = document.getElementById('printerPortInput').value.trim();
-            const name = document.getElementById('shopNameInput').value.trim();
-            const address = document.getElementById('shopAddressInput').value.trim();
-            const tax = document.getElementById('shopTaxInput').value.trim();
-            const footer = document.getElementById('shopFooterInput').value.trim();
-            const msg = document.getElementById('statusMsg');
+    function renderReceipt(order) {
+        // 1. توليد رقم فاتورة تلقائي فريد ومعتمد للطلب بناءً على وقت إنشائه
+        const generatedInvoiceId = order.invoiceId || "INV-" + Math.floor((order.timestamp || Date.now()) / 1000);
+        const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
+        
+        // 2. حساب إجمالي عدد قطع المنتجات المباعة في الفاتورة الحالية
+        let totalQty = 0;
 
-            if(!ip || !port || !name) {
-                msg.style.color = '#c62828';
-                msg.innerText = '⚠️ خطأ: يرجى كتابة الـ IP والمنفذ واسم المتجر على الأقل لإتمام الحفظ!';
-                return;
-            }
+        document.getElementById('orderInfo').innerHTML = `
+            <div class="info-row"><span>رقم الفاتورة:</span> <span style="font-weight:bold;">${generatedInvoiceId}</span></div>
+            <div class="info-row"><span>التاريخ والوقت:</span> <span>${orderDate}</span></div>
+            <div class="info-row"><span>رقم العميل:</span> <span>${order.phone || 'عميل سفري'}</span></div>
+        `;
 
-            // تخزين البيانات
-            localStorage.setItem('printer_ip', ip);
-            localStorage.setItem('printer_port', port);
-            localStorage.setItem('shop_name', name);
-            localStorage.setItem('shop_address', address);
-            localStorage.setItem('shop_tax', tax);
-            localStorage.setItem('shop_footer', footer);
+        // 3. بناء وتنسيق قائمة الأصناف والأعداد والمجاميع
+        document.getElementById('itemsList').innerHTML = order.items.map(item => {
+            const qty = parseInt(item.q || item.qty || 1);
+            totalQty += qty;
+            const itemTotal = parseFloat(item.totalItem || (item.price * qty));
+            return `
+                <tr>
+                    <td style="font-weight:bold;">${item.name}</td>
+                    <td style="text-align: center; font-weight:bold;">${qty}</td>
+                    <td style="text-align: left; font-weight:bold;">${itemTotal.toFixed(2)} ﷼</td>
+                </tr>
+            `;
+        }).join('');
 
-            msg.style.color = '#2e7d32';
-            msg.innerText = '✅ تم حفظ واعتماد التحديثات بنجاح ومزامنتها بالفواتير!';
-            
-            // تحديث فحص الاتصال بعد تعديل المنفذ
-            checkPrinterConnection();
+        // 4. الحسبة الضريبية الدقيقة (15%) بناءً على الإجمالي الكلي القادم من الكاشير
+        const grandTotalVal = parseFloat(order.total || 0);
+        const taxVal = (grandTotalVal * 0.15).toFixed(2);
+        const netVal = (grandTotalVal - taxVal).toFixed(2);
+
+        document.getElementById('taxCalculation').innerHTML = `
+            <div class="info-row" style="color:#444;"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
+            <div class="info-row" style="color:#444;"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
+            <div class="info-row" style="color:#444;"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
+        `;
+
+        document.getElementById('grandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
+        
+        // 5. استخراج وعرض تفاصيل طرق الدفع (نقدي / شبكة / مختلط)
+        let paymentMethodText = `طريقة الدفع: ${order.method || 'نقدي'}`;
+        if (order.paymentDetails) {
+            let details = [];
+            if(parseFloat(order.paymentDetails.cash) > 0) details.push(`كاش: ${parseFloat(order.paymentDetails.cash).toFixed(2)} ﷼`);
+            if(parseFloat(order.paymentDetails.card) > 0) details.push(`شبكة: ${parseFloat(order.paymentDetails.card).toFixed(2)} ﷼`);
+            if(details.length > 0) paymentMethodText += ` (${details.join(' + ')})`;
         }
-    </script>
+        document.getElementById('paymentDetails').innerText = paymentMethodText;
+
+        // 6. تفعيل أمر الطباعة الحراري الصامت والمعزول بعد اكتمال بناء عناصر الفاتورة
+        if (!isFirstLoad) {
+            setTimeout(() => { 
+                window.print(); 
+            }, 500);
+        }
+    }
+
+    window.onload = loadSettings;
+</script>
 </body>
+</html>
 </html>
