@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>كاشير شاهي وليف - الترتيب الجديد</title>
+    <title>كاشير شاهي وليف - المطور المعتمد</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -73,38 +73,53 @@
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
 
         /* ======================================================= */
-        /* 🖨️ إعدادات وهندسة الجدول لورق الـ 80mm الحقيقي ليتراص أفقياً */
+        /* 🖨️ هندسة محرك الطباعة المطور لمطابقة التصميم الجديد 80mm */
         /* ======================================================= */
         #hiddenPrintArea { display: none; }
 
         @media print {
-            @page { size: 72mm auto; margin: 0; }
+            @page { size: 76mm auto; margin: 0mm; }
             body * { display: none !important; } 
             #hiddenPrintArea, #hiddenPrintArea * { display: block !important; } 
             #hiddenPrintArea { 
-                background: white; 
-                width: 72mm; 
-                padding: 6mm 2mm; 
+                background: white !important; 
+                width: 74mm; 
+                padding: 4mm 4mm; 
                 box-sizing: border-box; 
                 direction: rtl;
+                color: #000 !important;
             }
-            .p-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
-            .p-title { font-size: 18px; font-weight: bold; margin-bottom: 4px; color: #000; }
-            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0; color: #000; }
             
-            /* هندسة الجدول ليكون في سطر واحد مستقيم */
-            .p-table { width: 100%; border-collapse: collapse; margin: 8px 0; table-layout: fixed; }
-            .p-table th { border-bottom: 1px solid #000; font-size: 12px; padding-bottom: 5px; font-weight: bold; color: #000; }
-            .p-table td { padding: 6px 0; font-size: 12px; vertical-align: middle; font-weight: bold; color: #000; word-wrap: break-word; }
+            /* الهيدر المطور */
+            .p-header { text-align: center; margin-bottom: 5px; }
+            .p-title { font-size: 19px; font-weight: bold; color: #000; margin-bottom: 2px; }
+            .p-subtitle { font-size: 10px; font-weight: bold; line-height: 1.4; color: #000; }
             
-            /* توزيع مساحات الأعمدة بدقة */
+            /* الخطوط المنقطة المعتمدة */
+            .p-divider { border-top: 1px dashed #000 !important; margin: 6px 0; height: 0; width: 100%; }
+            
+            /* كتل البيانات */
+            .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; font-weight: bold; color: #000; }
+            .p-row-title { font-size: 11px; font-weight: bold; margin-bottom: 2px; color: #000; }
+            
+            /* هندسة الجدول المطور - سطر واحد مستقيم يمنع التكسير نهائياً */
+            .p-table { width: 100%; border-collapse: collapse; margin: 4px 0; table-layout: fixed; }
+            .p-table th { font-size: 11px; font-weight: bold; color: #000; padding-bottom: 3px; }
+            .p-table td { font-size: 11px; font-weight: bold; color: #000; padding: 4px 0; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            
+            /* تحديد المساحات بالملي لعدم السماح بسقوط الكلمات */
             .col-name { text-align: right; width: 55%; }
             .col-qty { text-align: center; width: 15%; }
             .col-total { text-align: left; width: 30%; }
 
-            .p-total-section { border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; }
-            .p-total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; }
-            .p-footer { text-align: center; margin-top: 12px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; color: #000; }
+            /* قسم الحسابات والإجمالي */
+            .p-total-section { margin-top: 4px; }
+            .p-grand-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; margin-top: 4px; padding-top: 2px; }
+            
+            /* تذييل الفاتورة والـ QR */
+            .p-footer { text-align: center; font-size: 10px; font-weight: bold; color: #000; margin-top: 8px; line-height: 1.4; }
+            .qr-container { display: flex !important; justify-content: center; margin-top: 8px; }
+            .qr-box { width: 80px; height: 80px; border: 1px solid #000; display: flex !important; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; text-align: center; padding: 4px; background: #fff; }
         }
     </style>
 </head>
@@ -179,9 +194,13 @@
     <div id="hiddenPrintArea">
         <div class="p-header">
             <div class="p-title" id="p_Title">🌿 شاهي وليف</div>
-            <div id="p_Header" style="white-space: pre-line; font-size: 11px; font-weight: bold; line-height: 1.4;"></div>
+            <div id="p_Header" class="p-subtitle"></div>
         </div>
+        
+        <div class="p-divider"></div>
         <div id="p_OrderInfo"></div>
+        <div class="p-divider"></div>
+        
         <table class="p-table">
             <thead>
                 <tr>
@@ -192,18 +211,29 @@
             </thead>
             <tbody id="p_ItemsList"></tbody>
         </table>
+        
+        <div class="p-divider"></div>
+        
         <div class="p-total-section">
             <div id="p_TaxCalculation"></div>
-            <div class="p-total-row">
+            <div class="p-divider" style="margin: 4px 0;"></div>
+            <div class="p-grand-row">
                 <span>الإجمالي الشامل:</span>
                 <span id="p_GrandTotal">0.00 ﷼</span>
             </div>
-            <div id="p_PaymentDetails" style="font-size: 11px; margin-top: 5px; font-weight: bold;"></div>
+            <div id="p_PaymentDetails" style="font-size: 11px; margin-top: 4px; font-weight: bold;"></div>
         </div>
+        
+        <div class="p-divider"></div>
+        
         <div class="p-footer">
-            <div id="p_Footer" style="white-space: pre-line; font-weight: bold;"></div>
-            <div style="margin-top: 8px; font-size: 8px; font-weight: bold; letter-spacing: 0.5px; text-align: center;">نظام شاهي وليف السحابي الموحد</div>
-            <div style="height: 45px;"></div>
+            <div id="p_Footer"></div>
+            <div class="qr-container">
+                <div class="qr-box">
+                    فاتورة ضريبية<br>مبسطة<br>🔍 QR CODE
+                </div>
+            </div>
+            <div style="font-size: 9px; margin-top: 6px; font-weight: normal; opacity: 0.8;">نظام شاهي وليف السحابي الموحد</div>
         </div>
     </div>
 
@@ -318,8 +348,8 @@
         function directPrintReceipt(order) {
             const savedSettings = JSON.parse(localStorage.getItem('receiptSettings')) || {
                 title: "🌿 شاهي وليف",
-                header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
-                footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃"
+                header: "الرقم الضريبي: 7008227030 \nالفرع: الرئيسي \nالعنوان: المدينة المنورة - ورقان",
+                footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🌱 \nيسعدنا تقديم أفضل شاهي ومخبوزات لكم 🌿"
             };
 
             document.getElementById('p_Title').innerText = savedSettings.title;
