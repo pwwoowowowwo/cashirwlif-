@@ -2,11 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>محرك طباعة شاهي وليف - المطور الحقيقي</title>
+    <title>محرك طباعة شاهي وليف - الربط المباشر بالـ IP</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        /* الإعدادات العامة للعرض على الشاشة */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: #f4f7f6; 
@@ -18,7 +17,6 @@
             align-items: flex-start;
         }
 
-        /* لوحة التحكم الجانبية المعزولة تماماً */
         #editorPanel { 
             background: #fff; 
             padding: 20px; 
@@ -35,7 +33,6 @@
         #editorPanel input:focus, #editorPanel textarea:focus { border-color: #630000; outline: none; }
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 8px; font-size: 14px; transition: 0.2s; }
         
-        /* إعدادات محاكاة الورق الحراري على الشاشة (المعاينة) */
         #printArea { 
             background: white; 
             width: 72mm; 
@@ -51,46 +48,35 @@
         
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         th { border-bottom: 1px solid #000; text-align: right; font-size: 12px; padding-bottom: 6px; font-weight: bold; color: #000; }
-        td { padding: 6px 0; font-size: 12px; vertical-align: top; color: #000; font-weight: 500; }
+        td { padding: 6px 0; font-size: 12px; vertical-align: top; color: #000; font-weight: 500; word-break: break-word; }
         
         .total-section { border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
         .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #000; }
         .footer { text-align: center; margin-top: 15px; font-size: 11px; border-top: 1px dashed #000; padding-top: 10px; color: #000; }
 
-        /* ======================================================= */
-        /* 🖨️ إعدادات وهندسة الطباعة الحقيقية (تُطبق على الورق الحراري فقط) */
-        /* ======================================================= */
         @media print {
-            @page {
-                size: 72mm auto; 
-                margin: 0;       
-            }
-            body { 
-                background: white; 
-                padding: 0; 
-                margin: 0; 
-                width: 72mm; 
-                display: block; 
-            }
-            .no-print { 
-                display: none !important; 
-            }
-            #printArea { 
-                box-shadow: none; 
-                width: 72mm; 
-                padding: 8mm 4mm; 
-                border-radius: 0;
-                margin: 0;
-            }
+            @page { size: 72mm auto; margin: 0; }
+            body { background: white; padding: 0; margin: 0; width: 72mm; display: block; }
+            .no-print { display: none !important; }
+            #printArea { box-shadow: none; width: 72mm; padding: 5mm 4mm; border-radius: 0; margin: 0; }
         }
     </style>
 </head>
 <body>
 
 <div id="editorPanel" class="no-print">
-    <h4 style="color: #630000;">⚙️ إعدادات الفاتورة الضريبية</h4>
+    <h4 style="color: #630000;">⚙️ إعدادات الفاتورة والاتصال المباشر</h4>
+    
+    <div style="background: #fff3f3; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffcccc;">
+        <label style="color: #630000;">🌐 عنوان IP الطابعة الحرارية:</label>
+        <input type="text" id="printerIP" placeholder="مثال: 192.168.1.200" style="margin-bottom: 8px;">
+        
+        <label style="color: #630000;">🔌 منفذ الطابعة (Port):</label>
+        <input type="text" id="printerPort" placeholder="غالباً 8008 أو 3100" value="8008">
+    </div>
+
     <label>اسم المنشأة / المحل:</label>
-    <input type="text" id="editTitle" oninput="updateLive()" value="">
+    <input type="text" id="editTitle" oninput="updateLive()">
     
     <label>بيانات الترويسة والعنوان والرقم الضريبي:</label>
     <textarea id="editHeader" oninput="updateLive()" rows="4" placeholder="اكتب هنا الرقم الضريبي، اسم الفرع، والعنوان..."></textarea>
@@ -98,12 +84,9 @@
     <label>نص أسفل الفاتورة:</label>
     <textarea id="editFooter" oninput="updateLive()" rows="2" placeholder="شكراً لزيارتكم..."></textarea>
     
-    <button onclick="saveSettings()" class="btn" style="background: #630000; color: white;">حفظ الإعدادات في المتصفح 💾</button>
-    <button onclick="window.print()" class="btn" style="background: #444; color: white;">تجربة طباعة يدوية 🖨️</button>
-    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-    <p style="font-size: 11px; color: #777; line-height: 1.4; text-align: justify;">
-        * تم ربط حقول الطباعة الحية بالإعدادات مباشرة؛ ما تكتبه وتطبع بناءً عليه في الشاشة هو ما سيظهر على الورق تماماً وبشكل ديناميكي.
-    </p>
+    <button onclick="saveSettings()" class="btn" style="background: #630000; color: white;">حفظ الإعدادات والـ IP 💾</button>
+    <button onclick="sendToPrinterSocket()" class="btn" style="background: #006644; color: white;">اختبار اتصال الطابعة عن بعد 📡</button>
+    <button onclick="window.print()" class="btn" style="background: #444; color: white;">طباعة تقليدية عبر المتصفح 🖨</button>
 </div>
 
 <div id="printArea">
@@ -137,7 +120,7 @@
     <div class="footer">
         <div id="dispFooter" style="white-space: pre-line; font-weight: bold;"></div>
         <div style="margin-top: 12px; font-weight: 900; font-size: 9px; letter-spacing: 1px;">نظام شاهي وليف السحابي الموحد</div>
-        <div style="height: 60px;"></div> 
+        <div style="height: 40px;"></div> 
     </div>
 </div>
 
@@ -146,20 +129,23 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // جلب الإعدادات من الذاكرة المحلية بشكل مباشر ونظيف
+    // جلب كافة الإعدادات والـ IP من الذاكرة المحلية
     function loadSettings() {
         const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
             title: "🌿 شاهي وليف",
             header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
-            footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃"
+            footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃",
+            ip: "",
+            port: "8008"
         };
         document.getElementById('editTitle').value = saved.title;
         document.getElementById('editHeader').value = saved.header;
         document.getElementById('editFooter').value = saved.footer;
+        document.getElementById('printerIP').value = saved.ip || "";
+        document.getElementById('printerPort').value = saved.port || "8008";
         updateLive();
     }
 
-    // تحديث فوري في شاشة المعاينة بناءً على ما يكتبه المستخدم في الحقول
     function updateLive() {
         document.getElementById('dispTitle').innerText = document.getElementById('editTitle').value;
         document.getElementById('dispHeader').innerText = document.getElementById('editHeader').value;
@@ -170,29 +156,32 @@
         const settings = {
             title: document.getElementById('editTitle').value,
             header: document.getElementById('editHeader').value,
-            footer: document.getElementById('editFooter').value
+            footer: document.getElementById('editFooter').value,
+            ip: document.getElementById('printerIP').value,
+            port: document.getElementById('printerPort').value
         };
         localStorage.setItem('receiptSettings', JSON.stringify(settings));
-        alert("تم حفظ بيانات الفاتورة وتثبيتها بنجاح! ✅");
-        updateLive(); // لضمان التحديث الفوري
+        alert("تم حفظ البيانات وعنوان الـ IP بنجاح! ✅");
+        updateLive();
     }
 
     let isFirstLoad = true;
     db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
         const order = snapshot.val();
+        updateLive();
         
         if (isFirstLoad) {
             isFirstLoad = false;
-            renderReceipt(order); 
+            renderReceipt(order, false); 
             return;
         }
         
-        // قبل بدء عملية الطباعة الحية التلقائية نضمن إعادة تحديث البيانات من مربعات النص مباشرة لكي لا يطبع البيانات القديمة الكاش
-        updateLive();
-        renderReceipt(order);
+        renderReceipt(order, true); 
     });
 
-    function renderReceipt(order) {
+    function renderReceipt(order, shouldPrint) {
+        if (!order || !order.items) return;
+
         const generatedInvoiceId = order.invoiceId || "INV-" + Math.floor((order.timestamp || Date.now()) / 1000);
         const orderDate = order.timestamp ? new Date(order.timestamp).toLocaleString('ar-SA') : new Date().toLocaleString('ar-SA');
         
@@ -210,7 +199,7 @@
             const itemTotal = parseFloat(item.totalItem || (item.price * qty));
             return `
                 <tr>
-                    <td style="font-weight:bold;">${item.name}</td>
+                    <td style="font-weight:bold; max-width: 130px;">${item.name}</td>
                     <td style="text-align: center; font-weight:bold;">${qty}</td>
                     <td style="text-align: left; font-weight:bold;">${itemTotal.toFixed(2)} ﷼</td>
                 </tr>
@@ -218,13 +207,13 @@
         }).join('');
 
         const grandTotalVal = parseFloat(order.total || 0);
-        const taxVal = (grandTotalVal * 0.15).toFixed(2);
-        const netVal = (grandTotalVal - taxVal).toFixed(2);
+        const netVal = (grandTotalVal / 1.15);
+        const taxVal = grandTotalVal - netVal;
 
         document.getElementById('taxCalculation').innerHTML = `
             <div class="info-row" style="color:#444;"><span>إجمالي عدد القطع:</span> <span>${totalQty} قطع</span></div>
-            <div class="info-row" style="color:#444;"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal} ﷼</span></div>
-            <div class="info-row" style="color:#444;"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal} ﷼</span></div>
+            <div class="info-row" style="color:#444;"><span>المبلغ الخاضع للضريبة:</span> <span>${netVal.toFixed(2)} ﷼</span></div>
+            <div class="info-row" style="color:#444;"><span>ضريبة القيمة المضافة (15%):</span> <span>${taxVal.toFixed(2)} ﷼</span></div>
         `;
 
         document.getElementById('grandTotal').innerText = grandTotalVal.toFixed(2) + " ﷼";
@@ -238,14 +227,57 @@
         }
         document.getElementById('paymentDetails').innerText = paymentMethodText;
 
-        if (!isFirstLoad) {
-            setTimeout(() => { 
-                window.print(); 
-            }, 500);
+        // إذا كان هناك طلب جديد والـ IP مضاف، أرسل فوراً عبر الشبكة
+        if (shouldPrint) {
+            sendToPrinterSocket();
         }
+    }
+
+    // الدالة السحرية لإرسال البيانات مباشرة من المتصفح إلى الـ IP الخاص بالطابعة
+    function sendToPrinterSocket() {
+        const ip = document.getElementById('printerIP').value;
+        const port = document.getElementById('printerPort').value || "8008";
+
+        if (!ip) {
+            // إذا لم يقم بإدخال IP، يتم الرجوع التلقائي للطباعة التقليدية كخيار احتياطي لضمان عدم تعطل العمل
+            window.print();
+            return;
+        }
+
+        // إنشاء اتصال صامت مباشر عبر الشبكة بالطابعة
+        const socket = new WebSocket(`ws://${ip}:${port}`);
+
+        socket.onopen = function () {
+            // بناء أوامر الطابعة الحرارية الخام ESC/POS المعيارية
+            let esc = "\x1B\x40"; // إعادة تهيئة الطابعة للوضع الافتراضي
+            esc += "\x1B\x61\x01"; // تفعيل المحاذاة في المنتصف
+            esc += document.getElementById('editTitle').value + "\n";
+            esc += document.getElementById('editHeader').value + "\n";
+            esc += "--------------------------------\n";
+            
+            // سحب نصوص الفاتورة الحالية من الواجهة وضخها للطابعة مباشرة
+            esc += "\x1B\x61\x02"; // محاذاة لليمين للنصوص والأسعار
+            esc += document.getElementById('orderInfo').innerText + "\n";
+            esc += "--------------------------------\n";
+            esc += "الإجمالي الشامل: " + document.getElementById('grandTotal').innerText + "\n";
+            esc += "--------------------------------\n";
+            esc += document.getElementById('editFooter').value + "\n\n";
+            
+            esc += "\x1D\x56\x41\x00"; // الأمر السحري: قص الورق تلقائياً (Paper Cut)
+
+            socket.send(esc);
+            socket.close(); // إغلاق القناة بعد إتمام الطباعة بنجاح
+        };
+
+        socket.onerror = function (err) {
+            console.log("تعذر الاتصال المباشر بالـ IP. جاري التحويل للطباعة العادية للمتصفح...");
+            // في حال واجه المتصفح جدار حماية أو الطابعة لا تدعم WebSocket، يفتح نافذة الطباعة الافتراضية فوراً لكي لا يتوقف الكاشير
+            window.print();
+        };
     }
 
     window.onload = loadSettings;
 </script>
 </body>
 </html>
+
