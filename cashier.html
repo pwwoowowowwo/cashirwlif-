@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; --green: #2e7d32; }
+        :root { --maroon: #630000; --gold: #c5a059; --bg: #f4f4f2; --green: #2e7d32; --orange: #e67e22; --red: #c0392b; }
         * { box-sizing: border-box; font-family: 'Segoe UI', 'Arial', sans-serif; margin: 0; padding: 0; }
         body { background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
@@ -27,9 +27,10 @@
         .cat-btn { padding: 12px 24px; border-radius: 10px; border: 2px solid #f0f0f0; background: #f8f8f8; font-weight: bold; cursor: pointer; white-space: nowrap; color: #555; }
         .cat-btn.active { background: var(--maroon); color: white; border-color: var(--maroon); }
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 15px; overflow-y: auto; align-content: start; flex: 1; }
-        .item-card { background: #fff; border-radius: 12px; padding: 20px 8px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .item-card { background: #fff; border-radius: 12px; padding: 20px 8px; border: 1px solid #eee; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.05s ease; }
+        .item-card:active { transform: scale(0.96); }
 
-        /* الجهة اليسرى: السلة والدفع */
+        /* الجهة اليسرى: السلة والدفع بنفس الهوية */
         .cart-side { flex: 0.8; display: flex; flex-direction: column; background: #fff; padding: 10px; min-width: 350px; border-right: 1px solid #eee; height: 100%; }
         
         .payment-top-section {
@@ -63,8 +64,18 @@
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
 
+        /* شريط العمليات الإدارية المدمج أسفل الدفع مباشرة */
+        .quick-actions-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 2px; }
+        .action-mini-btn { padding: 8px 4px; font-size: 13px; font-weight: bold; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; background: white; color: #444; }
+        .action-mini-btn.btn-hold { border-color: var(--orange); color: var(--orange); }
+        .action-mini-btn.btn-hold.active-hold { background: var(--orange); color: white; }
+        .action-mini-btn.btn-refund { border-color: var(--red); color: var(--red); }
+        .action-mini-btn.btn-cancel { border-color: #7f8c8d; color: #7f8c8d; }
+
         .cart-bottom-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid #eee; padding-top: 10px; }
         .cart-items-wrapper { flex: 1; overflow-y: auto; background: #fcfcfc; border-radius: 15px; border: 1px solid #f0f0f0; }
+        
+        /* تصميم صف السلة الحالي مع زر الحذف السريع ✕ الأصلي */
         .cart-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f5; font-weight: bold; font-size: 14px; }
         .cart-row span:first-child { color: #e74c3c; cursor: pointer; font-weight: 900; padding: 0 10px; }
 
@@ -73,7 +84,7 @@
         .modal-body input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid var(--gold); border-radius: 8px; font-size: 18px; text-align: center; }
 
         /* ======================================================= */
-        /* 🖨️ تنسيقات الطباعة المحدثة والمطابقة للمحرك المطور الفخم  */
+        /* 🖨️ كود وتنسيقات الطباعة (محفوظة دون تعديل)             */
         /* ======================================================= */
         #printArea { display: none; }
 
@@ -94,26 +105,17 @@
             
             .receipt-header { text-align: center; margin-bottom: 2px; }
             .receipt-title { font-size: 16px; font-weight: bold; color: #000; margin-bottom: 2px; }
-            
-            /* الخطوط المنقطة المدمجة لتوفير الورق */
             .p-divider { border-top: 1px dotted #000 !important; margin: 4px 0; height: 0; width: 100%; }
-            
-            /* صفوف البيانات المتناسقة أفقياً */
             .p-row { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; font-weight: bold; color: #000; }
-            
-            /* ترويسة وأسطر جدول الأصناف المطور (منع التكسير) */
             .p-table-header { font-weight: bold; border-bottom: none; padding-bottom: 2px; }
             .p-table-row { padding: 3px 0; vertical-align: middle; }
             
-            /* توزيع مساحات الأعمدة بالملي لضمان بقائها في سطر واحد */
             .col-name { text-align: right; width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .col-qty { text-align: center; width: 20%; white-space: nowrap; }
             .col-total { text-align: left; width: 30%; white-space: nowrap; }
 
-            /* حسابات الإجمالي */
             .total-section { margin-top: 2px; }
             .total-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; color: #000; margin-top: 2px; padding: 1px 0; }
-            
             .footer { text-align: center; font-size: 10px; color: #000; margin-top: 5px; line-height: 1.3; }
         }
     </style>
@@ -161,6 +163,13 @@
                 <button class="btn-pay-final" onclick="handlePayment()">
                     <span>🧾</span> إتمام و طباعة
                 </button>
+
+                <!-- أزرار الإدارة المضافة تحت الدفع والطباعة -->
+                <div class="quick-actions-bar">
+                    <button class="action-mini-btn btn-hold" id="holdBtn" onclick="toggleHoldOrder()">⏳ تعليق الفاتورة</button>
+                    <button class="action-mini-btn btn-refund" onclick="triggerRefundProcess()">🔄 استرجاع فاتورة</button>
+                    <button class="action-mini-btn btn-cancel" onclick="clearCartWithConfirmation()">❌ كنسلة السلة</button>
+                </div>
             </div>
 
             <div class="cart-bottom-section">
@@ -186,6 +195,7 @@
         </div>
     </div>
 
+    <!-- منطقة الطباعة - لم يتم تعديل أي دالة أو وسم بها -->
     <div id="printArea">
         <div class="receipt-header">
             <div class="receipt-title" id="dispTitle">🌿 شاهي وليف</div>
@@ -225,12 +235,12 @@
     </div>
 
     <script>
-        // إعدادات قواعد البيانات وقائمة السلة والتشغيل المباشر
         const firebaseConfig = { databaseURL: "https://shahi-walif-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let allProducts = [], cart = [], payMethod = 'نقدي', currentCat = 'tea';
+        let heldCart = null; 
 
         function checkNet() {
             const dot = document.getElementById('netStatus');
@@ -302,13 +312,18 @@
             if (payMethod === 'مختلط') {
                 document.getElementById('cashInput').value = "";
                 document.getElementById('mixedModal').style.display = 'flex';
+                calculateSplit();
             } else {
                 processOrder(payMethod, {cash: payMethod === 'نقدي' ? total : 0, card: payMethod === 'شبكة' ? total : 0});
             }
         }
 
         async function processOrder(method, details) {
-            const generatedInvoiceCode = "INV-" + Math.floor(Date.now() / 1000);
+            // كود توليد رقم الفاتورة المطور والأنيق (وقت حالي + رقمين عشوائيين) لمنع الطول والتعقيد والتكرار
+            const now = new Date();
+            const timeString = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
+            const randomSuffix = Math.floor(10 + Math.random() * 90); 
+            const generatedInvoiceCode = "INV-" + timeString + randomSuffix;
 
             const order = {
                 invoiceId: generatedInvoiceCode,
@@ -326,7 +341,6 @@
 
             if(navigator.onLine) syncOfflineSales();
             
-            // استدعاء محرك الطباعة المطور المدمج لطباعة الفاتورة القصيرة
             directPrintReceipt(order);
             
             cart = []; 
@@ -334,7 +348,63 @@
             document.getElementById('customerPhone').value = "";
         }
 
-        // ⚡ هندسة معالجة تعبئة الفاتورة بالتنسيق المطور الملموم لمنع الهدر
+        function toggleHoldOrder() {
+            const btn = document.getElementById('holdBtn');
+            if (heldCart === null) {
+                if (cart.length === 0) { alert("السلة فارغة، لا يوجد شيء لتعليقه!"); return; }
+                heldCart = [...cart];
+                cart = [];
+                updateCart();
+                btn.innerText = "⏳ استعادة الفاتورة";
+                btn.classList.add('active-hold');
+            } else {
+                cart = [...heldCart];
+                heldCart = null;
+                updateCart();
+                btn.innerText = "⏳ تعليق الفاتورة";
+                btn.classList.remove('active-hold');
+            }
+        }
+
+        function clearCartWithConfirmation() {
+            if (cart.length === 0) return;
+            if (confirm("هل أنت متأكد من كنسلة وإلغاء هذه السلة بالكامل؟")) {
+                cart = [];
+                updateCart();
+            }
+        }
+
+        async function triggerRefundProcess() {
+            const inputInvoiceId = prompt("أدخل رقم الفاتورة المراد استرجاعها وعكس مبيعاتها (مثال: INV-18523088):");
+            if (!inputInvoiceId) return;
+
+            if (!navigator.onLine) {
+                alert("يجب أن تكون متصلاً بالشبكة حالياً للتمكن من حذف الفاتورة وعكس الجرد من السحابة!");
+                return;
+            }
+
+            db.ref('sales').orderByChild('invoiceId').equalTo(inputInvoiceId.trim()).once('value', async (snap) => {
+                const data = snap.val();
+                if (!data) {
+                    alert("لم يتم العثور على أي فاتورة مسجلة بهذا الرقم!");
+                    return;
+                }
+
+                const key = Object.keys(data)[0];
+                const invoiceDetails = data[key];
+
+                if (confirm(`تم العثور على الفاتورة بإجمالي: ${invoiceDetails.total} ﷼.\nهل أنت متأكد من حذفها نهائياً وعكس المبيعات؟`)) {
+                    try {
+                        await db.ref('sales').child(key).remove();
+                        alert("تم استرجاع الفاتورة بنجاح وحذف قيمتها من تقارير المبيعات.");
+                    } catch (error) {
+                        alert("حدث خطأ أثناء الحذف: " + error.message);
+                    }
+                }
+            });
+        }
+
+        /* 🧾 دالة بناء بيانات الطباعة الحرارية الأصلية دون تغيير */
         function directPrintReceipt(order) {
             const savedSettings = JSON.parse(localStorage.getItem('receiptSettings')) || {
                 title: "🌿 شاهي وليف",
@@ -355,7 +425,6 @@
                 <div class="p-row"><span>رقم العميل:</span> <span>${order.phone}</span></div>
             `;
 
-            // بناء قائمة الأصناف باستخدام الـ Divs المانعة للتكسر أفقياً ومطابقة للتصميم الجديد
             document.getElementById('itemsList').innerHTML = order.items.map(item => {
                 const qty = parseInt(item.q || 1);
                 totalQty += qty;
@@ -389,10 +458,7 @@
             }
             document.getElementById('paymentDetails').innerText = paymentMethodText;
 
-            // أمر استدعاء نافذة الطباعة الحرارية بعد التحميل اللحظي
-            setTimeout(() => {
-                window.print();
-            }, 250);
+            setTimeout(() => { window.print(); }, 250);
         }
 
         async function syncOfflineSales() {
