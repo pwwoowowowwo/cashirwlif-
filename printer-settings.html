@@ -72,7 +72,7 @@
         <input type="text" id="printerIP" placeholder="مثال: 192.168.1.200" style="margin-bottom: 8px;">
         
         <label style="color: #630000;">🔌 منفذ الطابعة (Port):</label>
-        <input type="text" id="printerPort" placeholder="غالباً 8008 أو 3100" value="8008">
+        <input type="text" id="printerPort" placeholder="المنفذ القياسي الموحد 9100" value="9100">
     </div>
 
     <label>اسم المنشأة / المحل:</label>
@@ -85,8 +85,8 @@
     <textarea id="editFooter" oninput="updateLive()" rows="2" placeholder="شكراً لزيارتكم..."></textarea>
     
     <button onclick="saveSettings()" class="btn" style="background: #630000; color: white;">حفظ الإعدادات والـ IP 💾</button>
-    <button onclick="sendToPrinterSocket()" class="btn" style="background: #006644; color: white;">اختبار اتصال الطابعة عن بعد 📡</button>
-    <button onclick="window.print()" class="btn" style="background: #444; color: white;">طباعة تقليدية عبر المتصفح 🖨</button>
+    <button onclick="sendToPrinterSocket()" class="btn" style="background: #006644; color: white;">اختبار طباعة فورية للآيباد 📡</button>
+    <button onclick="window.print()" class="btn" style="background: #444; color: white;">طباعة AirPrint للمتصفح 🖨</button>
 </div>
 
 <div id="printArea">
@@ -129,20 +129,21 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // جلب كافة الإعدادات والـ IP من الذاكرة المحلية
+    let lastOrderCached = null;
+
     function loadSettings() {
         const saved = JSON.parse(localStorage.getItem('receiptSettings')) || {
             title: "🌿 شاهي وليف",
             header: "الرقم الضريبي: \nالفرع: \nالعنوان: ",
             footer: "شكراً لزيارتكم! نتشرف بخدمتكم دائماً 🍃",
             ip: "",
-            port: "8008"
+            port: "9100"
         };
         document.getElementById('editTitle').value = saved.title;
         document.getElementById('editHeader').value = saved.header;
         document.getElementById('editFooter').value = saved.footer;
         document.getElementById('printerIP').value = saved.ip || "";
-        document.getElementById('printerPort').value = saved.port || "8008";
+        document.getElementById('printerPort').value = saved.port || "9100";
         updateLive();
     }
 
@@ -168,6 +169,7 @@
     let isFirstLoad = true;
     db.ref('sales').limitToLast(1).on('child_added', (snapshot) => {
         const order = snapshot.val();
+        lastOrderCached = order;
         updateLive();
         
         if (isFirstLoad) {
@@ -227,57 +229,89 @@
         }
         document.getElementById('paymentDetails').innerText = paymentMethodText;
 
-        // إذا كان هناك طلب جديد والـ IP مضاف، أرسل فوراً عبر الشبكة
         if (shouldPrint) {
             sendToPrinterSocket();
         }
     }
 
-    // الدالة السحرية لإرسال البيانات مباشرة من المتصفح إلى الـ IP الخاص بالطابعة
-    function sendToPrinterSocket() {
-        const ip = document.getElementById('printerIP').value;
-        const port = document.getElementById('printerPort').value || "8008";
+    // محرك تحويل النصوص لبايتات متوافقة مع الطابعات الحرارية الشاملة
+    function textToRawBytes(text) {
+        const encoder = new TextEncoder();
+        return encoder.encode(text + "\n");
+    }
 
+    // المحرك الذكي المطور خصيصاً لبيئة الآيباد ومتصفح Safari
+    function sendToPrinterSocket() {
+        const ip = document.getElementById('printerIP').value.trim();
+        const port = document.getElementById('printerPort').value.trim() || "9100";
+
+        // إذا لم يتم تهيئة الـ IP، نفتح محرك طباعة الآيباد AirPrint فوراً لمنع تعطل الطلبات
         if (!ip) {
-            // إذا لم يقم بإدخال IP، يتم الرجوع التلقائي للطباعة التقليدية كخيار احتياطي لضمان عدم تعطل العمل
             window.print();
             return;
         }
 
-        // إنشاء اتصال صامت مباشر عبر الشبكة بالطابعة
-        const socket = new WebSocket(`ws://${ip}:${port}`);
+        // استخدام Fetch API عبر بروتوكول HTTP الخام لإرسال حزم الأوامر لـ IP الطابعة مباشرة دون قيود WebSocket
+        // المنفذ 9100 هو المنفذ القياسي العالمي الموحد لجميع الطابعات الشبكية (Epson, Star, Xprinter, Bixolon)
+        let escCommands = [];
+        
+        escCommands.push(new Uint8Array([0x1B, 0x40])); // تفعيل وتهيئة الطابعة الافتراضية
+        escCommands.push(new Uint8Array([0x1B, 0x61, 0x01])); // محاذاة النص في المنتصف
+        escCommands.push(textToRawBytes(document.getElementById('editTitle').value));
+        escCommands.push(textToRawBytes(document.getElementById('editHeader').value));
+        escCommands.push(textToRawBytes("--------------------------------"));
 
-        socket.onopen = function () {
-            // بناء أوامر الطابعة الحرارية الخام ESC/POS المعيارية
-            let esc = "\x1B\x40"; // إعادة تهيئة الطابعة للوضع الافتراضي
-            esc += "\x1B\x61\x01"; // تفعيل المحاذاة في المنتصف
-            esc += document.getElementById('editTitle').value + "\n";
-            esc += document.getElementById('editHeader').value + "\n";
-            esc += "--------------------------------\n";
-            
-            // سحب نصوص الفاتورة الحالية من الواجهة وضخها للطابعة مباشرة
-            esc += "\x1B\x61\x02"; // محاذاة لليمين للنصوص والأسعار
-            esc += document.getElementById('orderInfo').innerText + "\n";
-            esc += "--------------------------------\n";
-            esc += "الإجمالي الشامل: " + document.getElementById('grandTotal').innerText + "\n";
-            esc += "--------------------------------\n";
-            esc += document.getElementById('editFooter').value + "\n\n";
-            
-            esc += "\x1D\x56\x41\x00"; // الأمر السحري: قص الورق تلقائياً (Paper Cut)
+        escCommands.push(new Uint8Array([0x1B, 0x61, 0x02])); // محاذاة النص لليمين تفادياً لمشاكل قلب السطور بالآيباد
+        
+        if (lastOrderCached && lastOrderCached.items) {
+            const invId = lastOrderCached.invoiceId || "INV";
+            escCommands.push(textToRawBytes(`فاتورة رقم: ${invId}`));
+            escCommands.push(textToRawBytes("الأصناف:"));
+            lastOrderCached.items.forEach(item => {
+                let q = item.q || item.qty || 1;
+                let t = parseFloat(item.totalItem || (item.price * q)).toFixed(2);
+                escCommands.push(textToRawBytes(`- ${item.name} x${q} : ${t} SAR`));
+            });
+        } else {
+            // في حال ضغط زر "اختبار الاتصال" بدون وجود طلبات في الكاش
+            escCommands.push(textToRawBytes("طلب تجريبي - اختبار اتصال الطابعة"));
+        }
 
-            socket.send(esc);
-            socket.close(); // إغلاق القناة بعد إتمام الطباعة بنجاح
-        };
+        escCommands.push(textToRawBytes("--------------------------------"));
+        escCommands.push(textToRawBytes("الإجمالي الشامل: " + document.getElementById('grandTotal').innerText));
+        escCommands.push(textToRawBytes("--------------------------------"));
+        
+        escCommands.push(new Uint8Array([0x1B, 0x61, 0x01])); // العودة للمنتصف
+        escCommands.push(textToRawBytes(document.getElementById('editFooter').value));
+        escCommands.push(textToRawBytes("\n\n\n")); // مسافة أمان لكي تظهر الفاتورة واضحة قبل القص
+        escCommands.push(new Uint8Array([0x1D, 0x56, 0x41, 0x00])); // الأمر العالمي لقص الورق تلقائياً
 
-        socket.onerror = function (err) {
-            console.log("تعذر الاتصال المباشر بالـ IP. جاري التحويل للطباعة العادية للمتصفح...");
-            // في حال واجه المتصفح جدار حماية أو الطابعة لا تدعم WebSocket، يفتح نافذة الطباعة الافتراضية فوراً لكي لا يتوقف الكاشير
+        // تجميع المصفوفات البايتية وضخها بالشبكة
+        let totalLen = escCommands.reduce((a, arr) => a + arr.length, 0);
+        let finalBuffer = new Uint8Array(totalLen);
+        let currentOffset = 0;
+        escCommands.forEach(arr => {
+            finalBuffer.set(arr, currentOffset);
+            currentOffset += arr.length;
+        });
+
+        // إرسال الحزمة بصمت تام
+        fetch(`http://${ip}:${port}`, {
+            method: 'POST',
+            mode: 'no-cors', // لتخطي جدار الحماية (CORS) الخاص بمتصفحات الآيباد
+            body: finalBuffer,
+            headers: { 'Content-Type': 'application/octet-stream' }
+        })
+        .then(() => {
+            console.log("تم إرسال البيانات إلى الطابعة المستهدفة عبر الشبكة بنجاح.");
+        })
+        .catch(err => {
+            console.warn("جدار حماية الآيباد منع الإرسال المباشر أو الطابعة لا تستجيب، جاري تفعيل نظام AirPrint الاحتياطي...");
             window.print();
-        };
+        });
     }
 
     window.onload = loadSettings;
 </script>
 </body>
 </html>
-
